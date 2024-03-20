@@ -1,0 +1,29 @@
+/*-- scss:defaults --*/
+
+$font-family-sans-serif: "Lexend";
+$font-family-monospace: "Lexend";
+$bs-body-font-family: "Lexend";
+$web-font-path: "No";
+
+/*-- scss:rules --*/
+
+@font-face {
+  font-family: 'Lexend';
+  src: url('fonts/lexend/Lexend-Regular.ttf') format('truetype');
+  /* Add additional font formats if needed */
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Lexend';
+  src: url('fonts/lexend/Lexend-Bold.ttf') format('truetype');
+  /* Add additional font formats if needed */
+  font-weight: bold;
+  font-style: normal;
+}
+
+
+
+
+$font-family-sans-serif: 'Lexend'; 

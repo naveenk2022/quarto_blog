@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.433">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Naveen Kannan">
+<meta name="dcterms.date" content="2023-09-22">
+<meta name="description" content="A guide to configuring Hive Metastore to use a MySQL server as the backend RDBMS for metadata storage, while enabling Spark to connect to the Metastore.">
+
+<title>Installing and configuring the HIVE metastore with a MySQL backend.</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+<meta property="og:title" content="Installing and configuring the HIVE metastore with a MySQL backend.">
+<meta property="og:description" content="A guide to configuring Hive Metastore to use a MySQL server as the backend RDBMS for metadata storage, while enabling Spark to connect to the Metastore.">
+<meta property="og:image" content="https://naveenkannan.netlify.app/posts/hive_sql/MySQL_logo.svg">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Naveen Kannan</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html" rel="" target="">
+ <span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../publications.html" rel="" target="">
+ <span class="menu-text">Publications</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../portfolio.html" rel="" target="">
+ <span class="menu-text">Portfolio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../blog_main.html" rel="" target="">
+ <span class="menu-text">Blog Posts</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/naveenk2022" rel="" target=""><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://linkedin.com/in/naveen-kannan-177120118" rel="" target=""><i class="bi bi-linkedin" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/naveenk2022/CV/blob/master/CV.pdf" rel="" target=""><i class="bi bi-file-person" role="img">
+</i> 
+ <span class="menu-text">CV</span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#hive-metastore" id="toc-hive-metastore" class="nav-link active" data-scroll-target="#hive-metastore">Hive Metastore</a>
+  <ul class="collapse">
+  <li><a href="#metadata-management" id="toc-metadata-management" class="nav-link" data-scroll-target="#metadata-management">Metadata Management</a></li>
+  <li><a href="#schema-definition" id="toc-schema-definition" class="nav-link" data-scroll-target="#schema-definition">Schema Definition</a></li>
+  <li><a href="#metadata-scaling" id="toc-metadata-scaling" class="nav-link" data-scroll-target="#metadata-scaling">Metadata Scaling</a></li>
+  </ul></li>
+  <li><a href="#metastore-and-the-relational-database-management-system-rdbms" id="toc-metastore-and-the-relational-database-management-system-rdbms" class="nav-link" data-scroll-target="#metastore-and-the-relational-database-management-system-rdbms">Metastore and the Relational Database Management System (RDBMS)</a></li>
+  <li><a href="#prerequisites" id="toc-prerequisites" class="nav-link" data-scroll-target="#prerequisites">Prerequisites</a></li>
+  <li><a href="#setting-up-mysql" id="toc-setting-up-mysql" class="nav-link" data-scroll-target="#setting-up-mysql">Setting up MySQL</a>
+  <ul class="collapse">
+  <li><a href="#download-the-mysql-repo-onto-the-node" id="toc-download-the-mysql-repo-onto-the-node" class="nav-link" data-scroll-target="#download-the-mysql-repo-onto-the-node">Download the MySQL Repo onto the node</a></li>
+  <li><a href="#install-the-repo-using-yum" id="toc-install-the-repo-using-yum" class="nav-link" data-scroll-target="#install-the-repo-using-yum">Install the repo using <code>yum</code></a></li>
+  <li><a href="#disabling-the-local-mysql-module" id="toc-disabling-the-local-mysql-module" class="nav-link" data-scroll-target="#disabling-the-local-mysql-module">Disabling the local <code>mysql</code> module</a></li>
+  <li><a href="#installing-mysql-community-server" id="toc-installing-mysql-community-server" class="nav-link" data-scroll-target="#installing-mysql-community-server">Installing <code>mysql-community-server</code></a></li>
+  <li><a href="#installing-mysql-connector-java" id="toc-installing-mysql-connector-java" class="nav-link" data-scroll-target="#installing-mysql-connector-java">Installing <code>mysql-connector-java</code></a></li>
+  <li><a href="#initializing-the-mysql-service" id="toc-initializing-the-mysql-service" class="nav-link" data-scroll-target="#initializing-the-mysql-service">Initializing the <code>mysql</code> service</a></li>
+  </ul></li>
+  <li><a href="#securing-mysql-and-initializing-the-server" id="toc-securing-mysql-and-initializing-the-server" class="nav-link" data-scroll-target="#securing-mysql-and-initializing-the-server">Securing MySQL and initializing the server</a>
+  <ul class="collapse">
+  <li><a href="#running-mysql_secure_installation" id="toc-running-mysql_secure_installation" class="nav-link" data-scroll-target="#running-mysql_secure_installation">Running <code>mysql_secure_installation</code></a></li>
+  <li><a href="#adding-new-users-and-setting-up-the-metastore" id="toc-adding-new-users-and-setting-up-the-metastore" class="nav-link" data-scroll-target="#adding-new-users-and-setting-up-the-metastore">Adding new users and setting up the metastore</a>
+  <ul class="collapse">
+  <li><a href="#bonus-automate-this" id="toc-bonus-automate-this" class="nav-link" data-scroll-target="#bonus-automate-this">Bonus! Automate this!</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#linking-mysql-and-hive-and-spark" id="toc-linking-mysql-and-hive-and-spark" class="nav-link" data-scroll-target="#linking-mysql-and-hive-and-spark">Linking MySQL and Hive (and Spark!)</a>
+  <ul class="collapse">
+  <li><a href="#deleting-a-duplicate-library" id="toc-deleting-a-duplicate-library" class="nav-link" data-scroll-target="#deleting-a-duplicate-library">Deleting a duplicate library</a></li>
+  <li><a href="#adding-the-mysql-jdbc-library-to-hive" id="toc-adding-the-mysql-jdbc-library-to-hive" class="nav-link" data-scroll-target="#adding-the-mysql-jdbc-library-to-hive">Adding the MySQL JDBC library to Hive</a></li>
+  <li><a href="#adding-the-mysql-jdbc-library-to-spark" id="toc-adding-the-mysql-jdbc-library-to-spark" class="nav-link" data-scroll-target="#adding-the-mysql-jdbc-library-to-spark">Adding the MySQL JDBC library to Spark</a></li>
+  <li><a href="#creating-a-hive-site.xml-file" id="toc-creating-a-hive-site.xml-file" class="nav-link" data-scroll-target="#creating-a-hive-site.xml-file">Creating a <code>hive-site.xml</code> file</a></li>
+  <li><a href="#editing-the-spark-env.sh-file" id="toc-editing-the-spark-env.sh-file" class="nav-link" data-scroll-target="#editing-the-spark-env.sh-file">Editing the <code>spark-env.sh</code> file</a></li>
+  <li><a href="#editing-the-spark-defaults.conf-file" id="toc-editing-the-spark-defaults.conf-file" class="nav-link" data-scroll-target="#editing-the-spark-defaults.conf-file">Editing the <code>spark-defaults.conf</code> file</a></li>
+  <li><a href="#restarting-the-mysql-service" id="toc-restarting-the-mysql-service" class="nav-link" data-scroll-target="#restarting-the-mysql-service">Restarting the MySQL service</a></li>
+  <li><a href="#initializing-the-metastore" id="toc-initializing-the-metastore" class="nav-link" data-scroll-target="#initializing-the-metastore">Initializing the Metastore</a></li>
+  </ul></li>
+  <li><a href="#testing" id="toc-testing" class="nav-link" data-scroll-target="#testing">Testing</a></li>
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further Reading</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Installing and configuring the HIVE metastore with a MySQL backend.</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Computing</div>
+    <div class="quarto-category">Clusters</div>
+    <div class="quarto-category">Discussion</div>
+    <div class="quarto-category">HIVE</div>
+    <div class="quarto-category">Spark</div>
+    <div class="quarto-category">SQL</div>
+    <div class="quarto-category">Database</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    A guide to configuring Hive Metastore to use a MySQL server as the backend RDBMS for metadata storage, while enabling Spark to connect to the Metastore.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Naveen Kannan </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 22, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="MySQL_logo.svg" class="img-fluid figure-img" width="307"></p>
+</figure>
+</div>
+<section id="hive-metastore" class="level1">
+<h1>Hive Metastore</h1>
+<p>Hive, a powerful data warehousing system built on top of Hadoop, relies on a component known as the metastore to efficiently manage metadata about the data stored within it. This metadata is crucial for organizing, querying, and processing data in Hive. In this blog post, we’ll explore the role of the Hive Metastore and the significance of selecting the right relational database management system (RDBMS) for it.</p>
+<section id="metadata-management" class="level2">
+<h2 class="anchored" data-anchor-id="metadata-management">Metadata Management</h2>
+<p>The Hive Metastore serves as a central repository for storing and managing metadata related to datasets within Hive. This metadata includes essential information such as:</p>
+<ul>
+<li><p>Table schemas</p></li>
+<li><p>Data types</p></li>
+<li><p>Column names</p></li>
+<li><p>Physical data file locations</p></li>
+</ul>
+<p>Without the metastore, Hive would struggle to efficiently keep track of these critical metadata elements.</p>
+</section>
+<section id="schema-definition" class="level2">
+<h2 class="anchored" data-anchor-id="schema-definition">Schema Definition</h2>
+<p>In Hive, tables are defined using a schema that specifies column names and their associated data types. This schema is fundamental for querying and processing data correctly. The metastore takes on the responsibility of storing and managing these table schemas, offering users the flexibility to:</p>
+<ul>
+<li><p>Create new tables</p></li>
+<li><p>Modify existing schemas</p></li>
+<li><p>Drop tables that are no longer needed</p></li>
+</ul>
+</section>
+<section id="metadata-scaling" class="level2">
+<h2 class="anchored" data-anchor-id="metadata-scaling">Metadata Scaling</h2>
+<p>In large-scale data environments, metadata can become extensive. Fortunately, the Hive Metastore can scale horizontally to handle substantial volumes of metadata efficiently. Additionally, it can be configured for high availability, ensuring continuous access to metadata even in the face of hardware failures or other issues.</p>
+</section>
+</section>
+<section id="metastore-and-the-relational-database-management-system-rdbms" class="level1">
+<h1>Metastore and the Relational Database Management System (RDBMS)</h1>
+<p>By default, Hive uses <strong>Apache Derby</strong> as the RDBMS for its metastore. Derby is a lightweight, open-source, Java-based RDBMS, and it serves as the default choice for small to medium-scale Hive installations, testing, and development purposes. Notably, Derby comes bundled with Hive, simplifying the initial setup</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="final_logowithtext.png" class="img-fluid figure-img" width="404"></p>
+<figcaption class="figure-caption">The Apache Derby Logo.</figcaption>
+</figure>
+</div>
+<p>While Derby is suitable for certain use cases, in this blog post, we will use MySQL as the RDBMS for Hive’s metastore for various reasons, such as:</p>
+<ul>
+<li><p>Scalability: MySQL excels in handling larger and more complex workloads, making it ideal for scaling Hive in data-rich environments.</p></li>
+<li><p>Performance: MySQL often delivers superior performance for complex queries and large datasets, making it well-suited for high-performance scenarios.</p></li>
+<li><p>Backup and Recovery: Advanced backup and recovery options in MySQL enhance data integrity and reliability.</p></li>
+<li><p>Enterprise Support: Organizations familiar with MySQL can leverage existing expertise for Hive’s metadata management.</p></li>
+<li><p>Integration: MySQL’s compatibility with various tools simplifies data integration and management processes.</p></li>
+<li><p>Community and Documentation: A large user community and extensive documentation resources make MySQL a dependable choice for Hive’s metadata management.</p></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="MySQL_logo.svg" class="img-fluid figure-img" width="307"></p>
+</figure>
+</div>
+</section>
+<section id="prerequisites" class="level1">
+<h1>Prerequisites</h1>
+<p>The following prerequisites will be needed prior to installing MySQL and altering Hive’s configuration.</p>
+<ul>
+<li><p>A properly configured Hadoop, YARN, Spark, and HDFS cluster.</p></li>
+<li><p>An installation of Hive.</p></li>
+</ul>
+</section>
+<section id="setting-up-mysql" class="level1">
+<h1>Setting up MySQL</h1>
+<p>My head node runs on RHEL 8. This guide will be for RHEL 8 Linux, but the general overview should be adaptable to other Unix-like systems.</p>
+<section id="download-the-mysql-repo-onto-the-node" class="level2">
+<h2 class="anchored" data-anchor-id="download-the-mysql-repo-onto-the-node">Download the MySQL Repo onto the node</h2>
+<p>The yum repo for MySQL needs to be downloaded to the system. The appropriate repo for your system can be found <a href="https://dev.mysql.com/downloads/repo/yum/">here.</a></p>
+</section>
+<section id="install-the-repo-using-yum" class="level2">
+<h2 class="anchored" data-anchor-id="install-the-repo-using-yum">Install the repo using <code>yum</code></h2>
+<p>I downloaded the repo to <code>/opt/mysql80-community-release-el8-8.noarch.rpm</code> in my file directory.</p>
+<p>Install the contents of the repo using</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">yum</span> localinstall /opt/mysql80-community-release-el8-8.noarch.rpm <span class="at">-y</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="disabling-the-local-mysql-module" class="level2">
+<h2 class="anchored" data-anchor-id="disabling-the-local-mysql-module">Disabling the local <code>mysql</code> module</h2>
+<p>Disable the local <code>mysql</code> module to prevent conflicts with the installation of the <code>mysql-community-server</code> module.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">yum</span> <span class="at">-y</span> module disable mysql</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="installing-mysql-community-server" class="level2">
+<h2 class="anchored" data-anchor-id="installing-mysql-community-server">Installing <code>mysql-community-server</code></h2>
+<p>Install the Community Server version of MySQL using:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">yum</span> <span class="at">-y</span> install mysql-community-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="installing-mysql-connector-java" class="level2">
+<h2 class="anchored" data-anchor-id="installing-mysql-connector-java">Installing <code>mysql-connector-java</code></h2>
+<p><code>mysql-connector-java</code>, or the MySQL JDBC (Java Database Connectivity) driver, is a Java-based library that provides connectivity between Java applications and the MySQL database management system. It allows Java programs to interact with MySQL databases by facilitating the exchange of data and SQL queries.</p>
+<p>Install it by running</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">yum</span> <span class="at">-y</span> install mysql-connector-java</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="initializing-the-mysql-service" class="level2">
+<h2 class="anchored" data-anchor-id="initializing-the-mysql-service">Initializing the <code>mysql</code> service</h2>
+<p>Initialize MySQL by running:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">service</span> mysqld start</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This will initialize the MySQL service. However, this installation of MySQL needs to be secured!</p>
+</section>
+</section>
+<section id="securing-mysql-and-initializing-the-server" class="level1">
+<h1>Securing MySQL and initializing the server</h1>
+<section id="running-mysql_secure_installation" class="level2">
+<h2 class="anchored" data-anchor-id="running-mysql_secure_installation">Running <code>mysql_secure_installation</code></h2>
+<p>MySQL version 8.0 or higher generates a temporary random password in <code>/var/log/mysqld.log</code> after installation.</p>
+<p>Find your random password by running</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="st">'A temporary password'</span> /var/log/mysqld.log <span class="kw">|</span><span class="fu">tail</span> <span class="at">-1</span> <span class="kw">|</span><span class="fu">awk</span> <span class="st">'{split($0,a,": "); print a[2]}'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Once you have that, run <code>mysql_secure_installation</code>.</p>
+<p>This script will guide you through setting up a root password, removing anonymous users, disallowing remote root login, and other security-related configurations.</p>
+</section>
+<section id="adding-new-users-and-setting-up-the-metastore" class="level2">
+<h2 class="anchored" data-anchor-id="adding-new-users-and-setting-up-the-metastore">Adding new users and setting up the metastore</h2>
+<p>Initialize MySQL by running</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mysql</span> <span class="at">-u</span> root <span class="at">-p</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>and enter your password.</p>
+<p>Run the following:</p>
+<pre><code>mysql&gt; CREATE DATABASE metastore;
+Query OK, 1 row affected (0.02 sec)
+mysql&gt; use metastore;
+Database changed
+mysql&gt; create user 'hive'@'localhost' identified by '&lt;root_password&gt;';
+Query OK, 0 rows affected (0.02 sec)
+mysql&gt; grant all PRIVILEGES on *.* to 'hive'@'localhost' with grant option;
+Query OK, 0 rows affected (0.02 sec)
+mysql&gt; create user 'hdfs'@'localhost' identified by '&lt;root_password&gt;';
+Query OK, 0 rows affected (0.04 sec)
+mysql&gt; grant all PRIVILEGES on *.* to 'hdfs'@'localhost' with grant option;
+Query OK, 0 rows affected (0.03 sec)
+mysql&gt; FLUSH PRIVILEGES;
+Query OK, 0 rows affected (0.02 sec)
+mysql&gt; exit
+Bye</code></pre>
+<p>Replace <code>&lt;root_password&gt;</code> with your actual password. This will create the metastore and also create the users <code>hive</code> and <code>hdfs</code> and grant them all necessary privileges to work within the metastore and it’s data.</p>
+<section id="bonus-automate-this" class="level3">
+<h3 class="anchored" data-anchor-id="bonus-automate-this">Bonus! Automate this!</h3>
+<p>If you’ve been following my posts, you’ll know that I’ve been using Ansible to automate this process. The above command is interactive! How do we get around this? If you’re deploying MySQL for production level systems, then this might be an unnecessary expenditure of time.</p>
+<p>In this section, I’ve added a bash script that automates the process of securing MySQL, adding new users and creating the metastore database.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Obtaining the  Temporary Password</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="va">root_temp_pass</span><span class="op">=</span><span class="va">$(</span><span class="fu">grep</span> <span class="st">'A temporary password'</span> /var/log/mysqld.log <span class="kw">|</span><span class="fu">tail</span> <span class="at">-1</span> <span class="kw">|</span><span class="fu">awk</span> <span class="st">'{split($0,a,": "); print a[2]}'</span><span class="va">)</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"root_temp_pass:"</span><span class="va">$root_temp_pass</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating a mysql_secure_installation.sql script to secure MySQL</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> mysql_secure_installation.sql <span class="op">&lt;&lt; EOF</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="st"># Ensuring that the server cannot be accessed without a password</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="st"># The password will be the cluster password</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="st"># Adding a user 'hdfs' and a user 'hive'</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="st">ALTER USER 'root'@'localhost' IDENTIFIED BY 'root_password';</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="st">CREATE USER 'hive'@'localhost' IDENTIFIED BY 'root_password';</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="st">CREATE USER 'hdfs'@'localhost' IDENTIFIED BY 'root_password';</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="st"># Removing the anonymous users</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="st">DELETE FROM mysql.user WHERE User='';</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="st"># Disallowing remote login for root</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="st">DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="st"># Removing the demo database</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="st">DROP DATABASE IF EXISTS test;</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="st">DELETE FROM mysql.db WHERE Db='test' OR Db='test</span><span class="dt">\\</span><span class="st">_%';</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="st"># Make our changes take effect</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="st">FLUSH PRIVILEGES;</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Running the SQL script to secure the installation of MySQL</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="ex">mysql</span> <span class="at">-uroot</span> <span class="at">-p</span><span class="st">"</span><span class="va">$root_temp_pass</span><span class="st">"</span> <span class="at">--connect-expired-password</span> <span class="op">&lt;</span>mysql_secure_installation.sql</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating another script to create the metastore and grant privileges to the hive, hdfs and root users for it</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> mysql_privilege_grant.sql <span class="op">&lt;&lt; EOF</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a><span class="st"># Granting privileges to the users hive, hdfs and root</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a><span class="st">CREATE DATABASE metastore;</span></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a><span class="st">use metastore;</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a><span class="st">grant all PRIVILEGES on *.* to "hive"@"localhost" with grant option;</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a><span class="st">grant all PRIVILEGES on *.* to "hdfs"@"localhost" with grant option;</span></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a><span class="st">grant all PRIVILEGES on *.* to "root"@"localhost" with grant option;</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a><span class="st">FLUSH PRIVILEGES;</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Running the SQL script to create the metastore and grant priviliges to the root, hive and hdfs users for the metastore</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a><span class="ex">mysql</span> <span class="at">-u</span> root <span class="at">-p</span><span class="st">"root_password"</span> <span class="at">--connect-expired-password</span> <span class="op">&lt;</span>mysql_privilege_grant.sql</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Replace <code>root_password</code> with your actual password and run this script. <strong>Remember to delete this script and the ones created by this script once it finishes running!</strong></p>
+</section>
+</section>
+</section>
+<section id="linking-mysql-and-hive-and-spark" class="level1">
+<h1>Linking MySQL and Hive (and Spark!)</h1>
+<section id="deleting-a-duplicate-library" class="level2">
+<h2 class="anchored" data-anchor-id="deleting-a-duplicate-library">Deleting a duplicate library</h2>
+<p>We will need to remove the <code>log4j-slf4j-impl-2.17.1.jar</code> file since MySQL has the same library, and the presence of multiple duplicate libraries in the <code>CLASSPATH</code> may cause Hive to fail.</p>
+<p>Change directories to your Hive installation, and then enter the <code>lib</code> directory, and delete the <code>log4j-slf4j-impl-2.17.1.jar</code> file.</p>
+</section>
+<section id="adding-the-mysql-jdbc-library-to-hive" class="level2">
+<h2 class="anchored" data-anchor-id="adding-the-mysql-jdbc-library-to-hive">Adding the MySQL JDBC library to Hive</h2>
+<p>Copy the <code>mysql-connector-java.jar</code> file located at <code>/usr/share/java/mysql-connector-java.jar</code> to the <code>lib</code> directory of your Hive installation. This ensures that Hive can utilize the MySQL JDBC library to connect to MySQL databases seamlessly.</p>
+<p>For example,</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> /usr/share/java/mysql-connector-java.jar /opt/apache-hive-3.1.3-bin/lib</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="adding-the-mysql-jdbc-library-to-spark" class="level2">
+<h2 class="anchored" data-anchor-id="adding-the-mysql-jdbc-library-to-spark">Adding the MySQL JDBC library to Spark</h2>
+<p>Copy the <code>mysql-connector-java.jar</code> file located at <code>/usr/share/java/mysql-connector-java.jar</code> to the <code>jars</code> directory of your Spark installation.</p>
+<p>This will enable Spark to also utilize the MySQL JDBC library to connect to MySQL databases seamlessly.</p>
+<p>For example,</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> /usr/share/java/mysql-connector-java.jar /opt/spark-3.3.2-bin-hadoop3/jars</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="creating-a-hive-site.xml-file" class="level2">
+<h2 class="anchored" data-anchor-id="creating-a-hive-site.xml-file">Creating a <code>hive-site.xml</code> file</h2>
+<p>Create a file named <code>hive-site.xml</code> in the <code>conf</code> directory of your Hive installation with the following content:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode xml code-with-copy"><code class="sourceCode xml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>&lt;<span class="kw">configuration</span>&gt;</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  &lt;<span class="kw">property</span>&gt;</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">name</span>&gt;javax.jdo.option.ConnectionURL&lt;/<span class="kw">name</span>&gt;</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">value</span>&gt;jdbc:mysql://localhost/metastore?createDatabaseIfNotExist=true&lt;/<span class="kw">value</span>&gt;</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">description</span>&gt;URL for establishing a connection to the Hive Metastore database.&lt;/<span class="kw">description</span>&gt;</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  &lt;/<span class="kw">property</span>&gt;</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  &lt;<span class="kw">property</span>&gt;</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">name</span>&gt;javax.jdo.option.ConnectionDriverName&lt;/<span class="kw">name</span>&gt;</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">value</span>&gt;com.mysql.jdbc.Driver&lt;/<span class="kw">value</span>&gt;</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">description</span>&gt;Fully qualified class name of the JDBC driver used for connecting Hive and MySQL.&lt;/<span class="kw">description</span>&gt;</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  &lt;/<span class="kw">property</span>&gt;</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  &lt;<span class="kw">property</span>&gt;</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">name</span>&gt;javax.jdo.option.ConnectionUserName&lt;/<span class="kw">name</span>&gt;</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">value</span>&gt;hive&lt;/<span class="kw">value</span>&gt;</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">description</span>&gt;User name used to connect to the MySQL database for Hive Metastore.&lt;/<span class="kw">description</span>&gt;</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  &lt;/<span class="kw">property</span>&gt;</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  &lt;<span class="kw">property</span>&gt;</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">name</span>&gt;javax.jdo.option.ConnectionPassword&lt;/<span class="kw">name</span>&gt;</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">value</span>&gt;root_password&lt;/<span class="kw">value</span>&gt;</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">description</span>&gt;Password for authenticating and connecting to the MySQL database.&lt;/<span class="kw">description</span>&gt;</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  &lt;/<span class="kw">property</span>&gt;</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>  &lt;<span class="kw">property</span>&gt;</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">name</span>&gt;datanucleus.autoCreateSchema&lt;/<span class="kw">name</span>&gt;</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">description</span>&gt;</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>      When set to 'true,' this option allows automatic creation of the schema (database structure) </span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>      if it doesn't already exist when Hive Metastore initializes.</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">description</span>&gt;</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">value</span>&gt;true&lt;/<span class="kw">value</span>&gt;</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>  &lt;/<span class="kw">property</span>&gt;</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>  &lt;<span class="kw">property</span>&gt;</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">name</span>&gt;datanucleus.fixedDatastore&lt;/<span class="kw">name</span>&gt;</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">value</span>&gt;true&lt;/<span class="kw">value</span>&gt;</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>  &lt;/<span class="kw">property</span>&gt;</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>  &lt;<span class="kw">property</span>&gt;</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">name</span>&gt;datanucleus.autoCreateTables&lt;/<span class="kw">name</span>&gt;</span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">description</span>&gt;</span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>      When set to 'true,' it indicates that the datastore (MySQL database) structure is fixed </span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>      and should not be altered automatically by Hive Metastore.</span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">description</span>&gt;</span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">value</span>&gt;True&lt;/<span class="kw">value</span>&gt;</span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>  &lt;/<span class="kw">property</span>&gt;</span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>&lt;/<span class="kw">configuration</span>&gt;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="editing-the-spark-env.sh-file" class="level2">
+<h2 class="anchored" data-anchor-id="editing-the-spark-env.sh-file">Editing the <code>spark-env.sh</code> file</h2>
+<p>Add the following line to your <code>spark-env.sh</code> file located in the <code>conf</code> directory of your Spark installation.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">SPARK_CLASSPATH</span><span class="op">=</span>/opt/apache-hive-3.1.3-bin/jars/mysql-connector-java.jar</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="editing-the-spark-defaults.conf-file" class="level2">
+<h2 class="anchored" data-anchor-id="editing-the-spark-defaults.conf-file">Editing the <code>spark-defaults.conf</code> file</h2>
+<p>Add the following line to your <code>spark-defaults.conf</code> file located in the <code>conf</code> directory of your Spark installation.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">spark.sql.warehouse.dir=hdfs://localhost:9000/user/hive/warehouse</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="restarting-the-mysql-service" class="level2">
+<h2 class="anchored" data-anchor-id="restarting-the-mysql-service">Restarting the MySQL service</h2>
+<p>Run the following commands to restart the MySQL service:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">service</span> mysqld stop</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="ex">service</span> mysqld start</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="initializing-the-metastore" class="level2">
+<h2 class="anchored" data-anchor-id="initializing-the-metastore">Initializing the Metastore</h2>
+<p>Run the following commands:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">hdfs</span> dfs <span class="at">-mkdir</span> /tmp</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="ex">hdfs</span> dfs <span class="at">-mkdir</span> /user</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ex">hdfs</span> dfs <span class="at">-mkdir</span> /user/hive</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="ex">hdfs</span> dfs <span class="at">-mkdir</span> /user/hive/warehouse</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="ex">hdfs</span> dfs <span class="at">-chmod</span> g+w /tmp</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="ex">hdfs</span> dfs <span class="at">-chmod</span> g+w /user/hive/warehouse</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="ex">schematool</span> <span class="at">-dbType</span> mysql <span class="at">-initSchema</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This will initialize the Hive Metastore.</p>
+<p>This should successfully have Hive configured to use the MySQL database as the backend RDBMS for metadata storage!</p>
+</section>
+</section>
+<section id="testing" class="level1">
+<h1>Testing</h1>
+<p>Now we will load a table into Hive and see if it is present where it should be.</p>
+<p>Download the data files from MovieLens 100k on the <a href="http://grouplens.org/datasets/movielens/">GroupLens datasets page</a> (which also has a README.txt file and index of unzipped files):</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wget</span> http://files.grouplens.org/datasets/movielens/ml-100k.zip</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Unzip the files</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unzip</span> ml-100k.zip</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Initialize the Hive server.</p>
+<p>Then, create a table by running the following:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">CREATE</span> <span class="kw">TABLE</span> u_data (</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  userid <span class="dt">INT</span>,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  movieid <span class="dt">INT</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  rating <span class="dt">INT</span>,</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  unixtime STRING)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="kw">ROW</span> FORMAT DELIMITED</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>FIELDS TERMINATED <span class="kw">BY</span> <span class="st">'</span><span class="ch">\t</span><span class="st">'</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>STORED <span class="kw">AS</span> TEXTFILE;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>And load <code>u.data</code> into the table that was just created:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>LOAD <span class="kw">DATA</span> <span class="kw">LOCAL</span> INPATH <span class="st">'&lt;path&gt;/ml-100k//u.data'</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>OVERWRITE <span class="kw">INTO</span> <span class="kw">TABLE</span> u_data;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Replace <code>&lt;path&gt;</code> with your path to the <code>ml-100k</code> folder.</p>
+<p>Count the number of rows in table u_data.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="fu">COUNT</span>(<span class="op">*</span>) <span class="kw">FROM</span> u_data;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Enter the <code>mysql</code> shell.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mysql</span> <span class="at">-u</span> hive <span class="at">-p</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>and enter your password.</p>
+<p>Run the following in the command line for MySQL:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> metastore;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Followed by</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>show <span class="kw">tables</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This will be your output:</p>
+<pre><code>+-------------------------------+
+| Tables_in_metastore           |
++-------------------------------+
+| AUX_TABLE                     |
+| BUCKETING_COLS                |
+| CDS                           |
+| COLUMNS_V2                    |
+| COMPACTION_QUEUE              |
+| COMPLETED_COMPACTIONS         |
+| COMPLETED_TXN_COMPONENTS      |
+| CTLGS                         |
+| DATABASE_PARAMS               |
+| DBS                           |
+| DB_PRIVS                      |
+| DELEGATION_TOKENS             |
+| FUNCS                         |
+| FUNC_RU                       |
+| GLOBAL_PRIVS                  |
+| HIVE_LOCKS                    |
+| IDXS                          |
+| INDEX_PARAMS                  |
+| I_SCHEMA                      |
+| KEY_CONSTRAINTS               |
+| MASTER_KEYS                   |
+| MATERIALIZATION_REBUILD_LOCKS |
+| METASTORE_DB_PROPERTIES       |
+| MIN_HISTORY_LEVEL             |
+| MV_CREATION_METADATA          |
+| MV_TABLES_USED                |
+| NEXT_COMPACTION_QUEUE_ID      |
+| NEXT_LOCK_ID                  |
+| NEXT_TXN_ID                   |
+| NEXT_WRITE_ID                 |
+| NOTIFICATION_LOG              |
+| NOTIFICATION_SEQUENCE         |
+| NUCLEUS_TABLES                |
+| PARTITIONS                    |
+| PARTITION_EVENTS              |
+| PARTITION_KEYS                |
+| PARTITION_KEY_VALS            |
+| PARTITION_PARAMS              |
+| PART_COL_PRIVS                |
+| PART_COL_STATS                |
+| PART_PRIVS                    |
+| REPL_TXN_MAP                  |
+| ROLES                         |
+| ROLE_MAP                      |
+| RUNTIME_STATS                 |
+| SCHEMA_VERSION                |
+| SDS                           |
+| SD_PARAMS                     |
+| SEQUENCE_TABLE                |
+| SERDES                        |
+| SERDE_PARAMS                  |
+| SKEWED_COL_NAMES              |
+| SKEWED_COL_VALUE_LOC_MAP      |
+| SKEWED_STRING_LIST            |
+| SKEWED_STRING_LIST_VALUES     |
+| SKEWED_VALUES                 |
+| SORT_COLS                     |
+| TABLE_PARAMS                  |
+| TAB_COL_STATS                 |
+| TBLS                          |
+| TBL_COL_PRIVS                 |
+| TBL_PRIVS                     |
+| TXNS                          |
+| TXN_COMPONENTS                |
+| TXN_TO_WRITE_ID               |
+| TYPES                         |
+| TYPE_FIELDS                   |
+| VERSION                       |
+| WM_MAPPING                    |
+| WM_POOL                       |
+| WM_POOL_TO_TRIGGER            |
+| WM_RESOURCEPLAN               |
+| WM_TRIGGER                    |
+| WRITE_SET                     |
++-------------------------------+
+74 rows in set (0.01 sec)</code></pre>
+<p>The created table should be located in <code>TBLS</code>.</p>
+<p>Run the following command:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">select</span> <span class="op">*</span> <span class="kw">from</span> TBLS;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This is what you should see:</p>
+<pre><code>+--------+-------------+-------+------------------+-------+------------+-----------+-------+----------------------------------------+---------------+--------------------+--------------------+----------------------------------------+
+| TBL_ID | CREATE_TIME | DB_ID | LAST_ACCESS_TIME | OWNER | OWNER_TYPE | RETENTION | SD_ID | TBL_NAME                               | TBL_TYPE      | VIEW_EXPANDED_TEXT | VIEW_ORIGINAL_TEXT | IS_REWRITE_ENABLED                     |
++--------+-------------+-------+------------------+-------+------------+-----------+-------+----------------------------------------+---------------+--------------------+--------------------+----------------------------------------+
+|      1 |  1695343066 |     1 |                0 | root  | USER       |         0 |     1 | u_data                                 | MANAGED_TABLE | NULL               | NULL               | 0x00
++--------+-------------+-------+------------------+-------+------------+-----------+-------+----------------------------------------+---------------+--------------------+--------------------+----------------------------------------+
+
+</code></pre>
+</section>
+<section id="further-reading" class="level1">
+<h1>Further Reading</h1>
+<ul>
+<li><a href="https://cwiki.apache.org/confluence/display/Hive/Tutorial#Tutorial-Concepts">Hive Basics</a></li>
+<li><a href="https://db.apache.org/derby/">Apache Derby</a></li>
+<li><a href="https://www.mysql.com/">MySQL</a></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<script src="https://giscus.app/client.js" data-repo="naveenk2022/website-giscus-comments" data-repo-id="R_kgDOKri3cw" data-category="Announcements" data-category-id="DIC_kwDOKri3c84Ca1Xu" data-mapping="pathname" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

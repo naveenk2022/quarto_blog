@@ -1,0 +1,32 @@
+---
+title: "Naveen Kannan's CV"
+date: "3/11/2023"
+---
+
+# Naveen Kannan {#centered-heading .center-heading}
+
+### United States Permanent Resident - Cleveland, Ohio {.center-heading}
+
+------------------------------------------------------------------------
+
+Data Scientist with extensive experience working with R, Python, GIS, and SQL. Expertise in visualizing data and synthesizing data into high-impact graphics and plots using ggplot. Able to create accessible and readable maps utilizing big spatial data and GIS. Able to execute and automate data extraction and analysis utilizing data mining and algorithmic techniques. Extensive experience in creating and interpreting different types of regression models. Significant experience conducting statistical analysis on healthcare data. Adept at synthesizing complex data into actionable reporting, proposals, and specification writing.
+
+# Skills
+
+-   **Python:** PANDAS, Keras, Numpy, scikitlearn, PySpark
+
+-   **R:** Advanced Statistical Analysis, Regression Analysis, R Markdown
+
+-   **ggplot:** Creating High-impact plots, graphics, and tables
+
+-   **SQL:** PostgreSQL querying
+
+-   **Linux:** Familiarity with CLI, shell scripting, file system management
+
+-   **Docker:** Experience with creating, building and running docker containers
+
+-   Algorithmic and Data Mining techniques
+
+-   Scientific Writing for Publications
+
+-   Excellent knowledge of big data technologies like Hadoop, Spark and NoSQL databases

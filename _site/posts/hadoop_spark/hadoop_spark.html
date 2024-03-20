@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.433">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Naveen Kannan">
+<meta name="dcterms.date" content="2023-08-21">
+<meta name="description" content="A guide to installing Hadoop and Spark on a 4 node cluster, while configuring and setting up HDFS, YARN and MapReduce.">
+
+<title>Installing and configuring Hadoop and Spark on a 4 node cluster.</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+<meta property="og:title" content="Installing and configuring Hadoop and Spark on a 4 node cluster.">
+<meta property="og:description" content="A guide to installing Hadoop and Spark on a 4 node cluster, while configuring and setting up HDFS, YARN and MapReduce.">
+<meta property="og:image" content="https://naveenkannan.netlify.app/posts/hadoop_spark/1200px-Hadoop_logo_new.svg.png">
+<meta property="og:image:height" content="360">
+<meta property="og:image:width" content="1200">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Naveen Kannan</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html" rel="" target="">
+ <span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../publications.html" rel="" target="">
+ <span class="menu-text">Publications</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../portfolio.html" rel="" target="">
+ <span class="menu-text">Portfolio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../blog_main.html" rel="" target="">
+ <span class="menu-text">Blog Posts</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/naveenk2022" rel="" target=""><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://linkedin.com/in/naveen-kannan-177120118" rel="" target=""><i class="bi bi-linkedin" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/naveenk2022/CV/blob/master/CV.pdf" rel="" target=""><i class="bi bi-file-person" role="img">
+</i> 
+ <span class="menu-text">CV</span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#a-brief-introduction-to-hadoop" id="toc-a-brief-introduction-to-hadoop" class="nav-link active" data-scroll-target="#a-brief-introduction-to-hadoop">A brief introduction to Hadoop</a></li>
+  <li><a href="#hadoops-main-components" id="toc-hadoops-main-components" class="nav-link" data-scroll-target="#hadoops-main-components">Hadoop’s Main Components</a></li>
+  <li><a href="#installing-hadoop-on-a-4-node-cluster" id="toc-installing-hadoop-on-a-4-node-cluster" class="nav-link" data-scroll-target="#installing-hadoop-on-a-4-node-cluster">Installing Hadoop on a 4 node cluster</a>
+  <ul class="collapse">
+  <li><a href="#prerequisites" id="toc-prerequisites" class="nav-link" data-scroll-target="#prerequisites">Prerequisites:</a>
+  <ul class="collapse">
+  <li><a href="#jdk-8" id="toc-jdk-8" class="nav-link" data-scroll-target="#jdk-8">JDK 8</a></li>
+  <li><a href="#ssh-secure-shell-and-pdsh" id="toc-ssh-secure-shell-and-pdsh" class="nav-link" data-scroll-target="#ssh-secure-shell-and-pdsh">SSH (Secure Shell) and PDSH</a></li>
+  <li><a href="#python-3.9" id="toc-python-3.9" class="nav-link" data-scroll-target="#python-3.9">Python 3.9</a></li>
+  <li><a href="#jupyter-notebook" id="toc-jupyter-notebook" class="nav-link" data-scroll-target="#jupyter-notebook">Jupyter Notebook</a></li>
+  </ul></li>
+  <li><a href="#installing-hadoop-and-spark" id="toc-installing-hadoop-and-spark" class="nav-link" data-scroll-target="#installing-hadoop-and-spark">Installing Hadoop and Spark</a>
+  <ul class="collapse">
+  <li><a href="#downloading-and-unzipping-hadoop" id="toc-downloading-and-unzipping-hadoop" class="nav-link" data-scroll-target="#downloading-and-unzipping-hadoop">Downloading and Unzipping Hadoop</a></li>
+  <li><a href="#downloading-and-unzipping-spark" id="toc-downloading-and-unzipping-spark" class="nav-link" data-scroll-target="#downloading-and-unzipping-spark">Downloading and Unzipping Spark</a></li>
+  <li><a href="#configuring-hadoop-and-spark" id="toc-configuring-hadoop-and-spark" class="nav-link" data-scroll-target="#configuring-hadoop-and-spark">Configuring Hadoop and Spark</a></li>
+  <li><a href="#updating-the-hadoop-configuration-files" id="toc-updating-the-hadoop-configuration-files" class="nav-link" data-scroll-target="#updating-the-hadoop-configuration-files">Updating the Hadoop configuration files</a></li>
+  <li><a href="#updating-the-spark-configuration-files" id="toc-updating-the-spark-configuration-files" class="nav-link" data-scroll-target="#updating-the-spark-configuration-files">Updating the Spark configuration files</a></li>
+  <li><a href="#starting-the-hdfs-and-yarn-services" id="toc-starting-the-hdfs-and-yarn-services" class="nav-link" data-scroll-target="#starting-the-hdfs-and-yarn-services">Starting the HDFS and YARN services</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#monitoring-the-services" id="toc-monitoring-the-services" class="nav-link" data-scroll-target="#monitoring-the-services">Monitoring the services</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Installing and configuring Hadoop and Spark on a 4 node cluster.</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Computing</div>
+    <div class="quarto-category">Clusters</div>
+    <div class="quarto-category">Discussion</div>
+    <div class="quarto-category">Hadoop</div>
+    <div class="quarto-category">Spark</div>
+    <div class="quarto-category">HDFS</div>
+    <div class="quarto-category">YARN</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    A guide to installing Hadoop and Spark on a 4 node cluster, while configuring and setting up HDFS, YARN and MapReduce.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Naveen Kannan </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">August 21, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="a-brief-introduction-to-hadoop" class="level1">
+<h1>A brief introduction to Hadoop</h1>
+<p>Apache Hadoop is an open source software library that allows for the distributed processing of large datasets across a computing cluster.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="1200px-Hadoop_logo_new.svg.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+<p>Hadoop shines at processing enormously massive amounts of data that is too big to fit on a single computing system.</p>
+</section>
+<section id="hadoops-main-components" class="level1">
+<h1>Hadoop’s Main Components</h1>
+<p>Hadoop has components integral to its functioning. These include:</p>
+<p><strong>The HDFS (Hadoop Distributed File System)</strong></p>
+<p>HDFS is a distributed file system that provides high-throughput access to application data, and is used to scale a single Apache Hadoop cluster to hundreds (and even thousands) of nodes.</p>
+<p>HDFS takes massive data files and splits them into smaller chunks called “blocks.” These blocks are typically quite large (often 128 MB or 256 MB), which helps in efficient data management and processing.</p>
+<p>These blocks are spread out and replicated across multiple machines in the cluster, ensuring that if one machine fails, the stored data is still safe because there are replicated copies of each block spread across different machines.</p>
+<p>HDFS has two components: the NameNode and the DataNode.</p>
+<p>The NameNode keeps track of where each block of data is located in the cluster.</p>
+<p>The DataNode(s) store the actual data blocks and are spread across the cluster.</p>
+<p><strong>YARN (Yet Another Resource Negotiator)</strong></p>
+<p>YARN, which stands for Yet Another Resource Negotiator, plays a pivotal role in managing resources and scheduling tasks within the Hadoop architecture. It consists of two primary components: the ResourceManager (RM) and the NodeManager (NM).</p>
+<p>YARN effectively distributes computing resources and manages job scheduling across various applications running on the Hadoop cluster.</p>
+<p>The ResourceManager is the central decision-maker for resource allocation and is responsible for fairly distributing resources among all the applications running on the cluster.</p>
+<p>The NodeManager is responsible for managing resources on a per-machine basis.</p>
+<p><strong>MapReduce</strong></p>
+<p>MapReduce is a programming model and processing framework that divides big data tasks into smaller sub-tasks, processes them in parallel across a cluster, and then combines the results.</p>
+<p>Mapping:</p>
+<ul>
+<li>Data is split into chunks and assigned to “mappers.”</li>
+<li>Mappers process data and produce intermediate key-value pairs.</li>
+</ul>
+<p>Shuffling and Sorting:</p>
+<ul>
+<li>Intermediate pairs are sorted and grouped by keys.</li>
+<li>Data with the same key is grouped together.</li>
+</ul>
+<p>Reducing:</p>
+<ul>
+<li>Grouped data is sent to “reducers.”</li>
+<li>Reducers process the data, performing operations and producing final results.</li>
+</ul>
+<p><strong>Hadoop Common</strong></p>
+<p>Hadoop Common provides essential fundamental libraries and utilities for different components within the Hadoop architecture. It serves as a shared resource that supports the entire Hadoop framework.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="hadoop_architecture.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">A diagrammatic representation of the Hadoop architecture across a computing cluster with a Master Node and 3 Slave Nodes.</figcaption>
+</figure>
+</div>
+</section>
+<section id="installing-hadoop-on-a-4-node-cluster" class="level1">
+<h1>Installing Hadoop on a 4 node cluster</h1>
+<section id="prerequisites" class="level2">
+<h2 class="anchored" data-anchor-id="prerequisites">Prerequisites:</h2>
+<p>To begin with, the 4 clusters require a Unix-like operating system.</p>
+<p>Furthermore, while not essential, using Ansible enormously reduces the time needed to configure and install HDFS with the aforementioned components.</p>
+<p>In my previous blog post, I described how to use Ansible (deployed via a Docker container) to remotely configure a computing cluster. This obviates the need for Ansible itself to be installed on the head node. For details on how to use Ansible to configure a cluster, please refer my previous blog post.</p>
+<p>I used Ansible to perform all of the tasks detailed in this blog post. While this post describes the general steps needed for installing Hadoop, the next blog post will have the Ansible playbooks posted so as to describe each step of the process in more detail.</p>
+<section id="jdk-8" class="level3">
+<h3 class="anchored" data-anchor-id="jdk-8">JDK 8</h3>
+<p>Ensure that each cluster node has OpenJDK installed.</p>
+<p>Note that if this is being installed using the <code>yum</code> package manager, the EPEL (Extra Packages for Enterprise Linux) repository needs to be imported and activated.</p>
+</section>
+<section id="ssh-secure-shell-and-pdsh" class="level3">
+<h3 class="anchored" data-anchor-id="ssh-secure-shell-and-pdsh">SSH (Secure Shell) and PDSH</h3>
+<p>Hadoop requires SSH and PDSH to be installed on each node of the cluster. Communication between nodes is done via Hadoop.</p>
+<p>Also, ensure that each node can SSH into every other node without a password prompt. This will require performing an SSH Key exchange between every node of the cluster and every other node. (Refer to my blog post about using Ansible to remotely configure a cluster for more details on SSH key exchanges.)</p>
+<p>Pro-tip! On my RHEL 8 head node, I ran into a lot of erros from using <code>pdsh</code> since it didn’t come with SSH incorporated. I used <code>dnf</code> to download <code>pdsh-rcmd-ssh</code> after installing <code>pdsh</code> using <code>yum.</code></p>
+<p>Update your <code>.bashrc</code> or <code>.bash_profile</code> file with the following:</p>
+<pre><code>export PDSH_RCMD_TYPE=ssh</code></pre>
+</section>
+<section id="python-3.9" class="level3">
+<h3 class="anchored" data-anchor-id="python-3.9">Python 3.9</h3>
+<p>While not a hard requirement for just Hadoop, we intend to install Spark, and use Python to interact with the Scala API, using Jupyter Notebook as the driver.</p>
+</section>
+<section id="jupyter-notebook" class="level3">
+<h3 class="anchored" data-anchor-id="jupyter-notebook">Jupyter Notebook</h3>
+<p>Once Python is installed, run <code>python3 -m pip install --upgrade pip</code> in order to upgrade pip, and then install Jupyter using <code>pip install jupyter</code>.</p>
+</section>
+</section>
+<section id="installing-hadoop-and-spark" class="level2">
+<h2 class="anchored" data-anchor-id="installing-hadoop-and-spark">Installing Hadoop and Spark</h2>
+<section id="downloading-and-unzipping-hadoop" class="level3">
+<h3 class="anchored" data-anchor-id="downloading-and-unzipping-hadoop">Downloading and Unzipping Hadoop</h3>
+<p>Download a recent stable release from one of the <a href="https://www.apache.org/dyn/closer.cgi/hadoop/common/">Apache Download Mirrors for Hadoop.</a> (I downloaded Hadoop 3.3.6.)</p>
+<p>Unzip the downloaded tarball.</p>
+</section>
+<section id="downloading-and-unzipping-spark" class="level3">
+<h3 class="anchored" data-anchor-id="downloading-and-unzipping-spark">Downloading and Unzipping Spark</h3>
+<p>Download a recent stable release from one of the <a href="https://www.apache.org/dyn/closer.lua/spark/spark-3.4.1/spark-3.4.1-bin-hadoop3.tgz">Apache Download Mirrors for Spark.</a> (I downloaded Spark 3.3.2 to be compatiable with Hail and Glow.)</p>
+<p>Unzip the downloaded tarball.</p>
+</section>
+<section id="configuring-hadoop-and-spark" class="level3">
+<h3 class="anchored" data-anchor-id="configuring-hadoop-and-spark">Configuring Hadoop and Spark</h3>
+<p>In your <code>.bashrc</code> or <code>bash_profile</code>, update the locations of Java, Hadoop and Spark to your PATH.</p>
+<p>Update the locations of HDFS, MapReduce and Common.</p>
+<p>Reload the terminal.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">HADOOP_HOME</span><span class="op">=</span>/opt/hadoop-3.3.6</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">PATH</span><span class="op">=</span><span class="va">$PATH</span>:<span class="va">$HADOOP_HOME</span>/bin</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">PATH</span><span class="op">=</span><span class="va">$PATH</span>:<span class="va">$HADOOP_HOME</span>/sbin</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">HADOOP_MAPRED_HOME</span><span class="op">=</span><span class="va">${HADOOP_HOME}</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">HADOOP_COMMON_HOME</span><span class="op">=</span><span class="va">${HADOOP_HOME}</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">HADOOP_HDFS_HOME</span><span class="op">=</span><span class="va">${HADOOP_HOME}</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">HADOOP_YARN_HOME</span><span class="op">=</span><span class="va">${HADOOP_HOME}</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">JAVA_HOME</span><span class="op">=</span>/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.382.b05-2.el8.x86_64</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">LANG</span><span class="op">=</span>en_US.UTF-8</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">TZ</span><span class="op">=</span>UTC</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">CLASSPATH_PREPEND_DISTCACHE</span><span class="op">=</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">SPARK_HOME</span><span class="op">=</span>/opt/spark-3.3.2-bin-hadoop3</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">PATH</span><span class="op">=</span><span class="va">$PATH</span>:<span class="va">$SPARK_HOME</span>/bin</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">HADOOP_CONF_DIR</span><span class="op">=</span>/opt/hadoop-3.3.6/etc/hadoop</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">LD_LIBRARY_PATH</span><span class="op">=</span>/opt/hadoop-3.3.6/lib/native:<span class="va">$LD_LIBRARY_PATH</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">PYSPARK_DRIVER_PYTHON</span><span class="op">=</span>jupyter</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">PYSPARK_DRIVER_PYTHON_OPTS</span><span class="op">=</span><span class="st">"notebook --NotebookApp.open_browser=False --NotebookApp.ip='localhost' "</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">PATH</span><span class="op">=</span><span class="va">$PATH</span>:/usr/local/bin</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="updating-the-hadoop-configuration-files" class="level3">
+<h3 class="anchored" data-anchor-id="updating-the-hadoop-configuration-files">Updating the Hadoop configuration files</h3>
+<p>The following configuration files need to be edited across the cluster.</p>
+<ul>
+<li>hadoop-env.sh</li>
+</ul>
+<p>This file can be found in your installation directory. Assuming the name of the directory hadoop was unzipped to is /hadoop, the file can be found at /hadoop/etc/hadoop/hadoop-env.sh.</p>
+<p>Add the following line to the file in order to add the location of the Java installation to Hadoop:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">JAVA_HOME</span><span class="op">=</span>/usr/lib/jvm/java-8-openjdk-amd64/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Note that the name/location of the Java installation can change depending on your system.</p>
+<ul>
+<li>workers</li>
+</ul>
+<p>Edit the <code>workers</code> file to add the names of your cluster. Note that this requires the names of the nodes with their IP addresses to be present in the /etc/hosts file.</p>
+<ul>
+<li>core-site.xml</li>
+</ul>
+<p>This file can be found in your installation directory. Assuming the name of the directory hadoop was unzipped to is /hadoop, the file can be found at /hadoop/etc/hadoop/core-site.xml.</p>
+<p>Insert this code block between <code>&lt;configuration&gt;</code> and <code>&lt;/configuration&gt;</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;fs.defaultFS&lt;/name&gt;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;hdfs://namenode:9000&lt;/value&gt;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ul>
+<li>hdfs-site.xml</li>
+</ul>
+<p>This file can be found in your installation directory. Assuming the name of the directory hadoop was unzipped to is /hadoop, the file can be found at /hadoop/etc/hadoop/hdfs-site.xml.</p>
+<p>Insert this code block between <code>&lt;configuration&gt;</code> and <code>&lt;/configuration&gt;</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;dfs.namenode.name.dir&lt;/name&gt;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;/home/temp/data/nameNode&lt;/value&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;dfs.datanode.data.dir&lt;/name&gt;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;/home/temp/data/dataNode&lt;/value&gt;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;dfs.replication&lt;/name&gt;</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;4&lt;/value&gt;</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ul>
+<li>yarn-site.xml</li>
+</ul>
+<p>This file can be found in your installation directory. Assuming the name of the directory hadoop was unzipped to is /hadoop, the file can be found at /hadoop/etc/hadoop/yarn-site.xml.</p>
+<p>Insert this code block between <code>&lt;configuration&gt;</code> and <code>&lt;/configuration&gt;</code>.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;yarn.nodemanager.aux-services&lt;/name&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;mapreduce_shuffle&lt;/value&gt;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;yarn.nodemanager.env-whitelist&lt;/name&gt;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_HOME,PATH,LANG,TZ,HADOOP_MAPRED_HOME&lt;/value&gt;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;yarn.resourcemanager.hostname&lt;/name&gt;</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;(namenode IP Address)&lt;/value&gt;</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;yarn.acl.enable&lt;/name&gt;</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;0&lt;/value&gt;</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ul>
+<li>mapred-site.xml</li>
+</ul>
+<p>This file can be found in your installation directory. Assuming the name of the directory hadoop was unzipped to is /hadoop, the file can be found at /hadoop/etc/hadoop/mapred-site.xml.</p>
+<p>Insert this code block between <code>&lt;configuration&gt;</code> and <code>&lt;/configuration&gt;</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;mapreduce.framework.name&lt;/name&gt;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;yarn&lt;/value&gt;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;yarn.app.mapreduce.am.env&lt;/name&gt;</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;HADOOP_MAPRED_HOME=$HADOOP_HOME&lt;/value&gt;</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;mapreduce.map.env&lt;/name&gt;</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;HADOOP_MAPRED_HOME=$HADOOP_HOME&lt;/value&gt;</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;mapreduce.reduce.env&lt;/name&gt;</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;HADOOP_MAPRED_HOME=$HADOOP_HOME&lt;/value&gt;</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;property&gt;</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;name&gt;mapreduce.application.classpath&lt;/name&gt;</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="at">    &lt;value&gt;$HADOOP_MAPRED_HOME/share/hadoop/mapreduce/*,$HADOOP_MAPRED_HOME/share/hadoop/mapreduce/lib/*,$HADOOP_MAPRED_HOME/share/hadoop/common/*,$HADOOP_MAPRED_HOME/share/hadoop/common/lib/*,$HADOOP_MAPRED_HOME/share/hadoop/yarn/*,$HADOOP_MAPRED_HOME/share/hadoop/yarn/lib/*,$HADOOP_MAPRED_HOME/share/hadoop/hdfs/*,$HADOOP_MAPRED_HOME/share/hadoop/hdfs/lib/*&lt;/value&gt;</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="at">&lt;/property&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="updating-the-spark-configuration-files" class="level3">
+<h3 class="anchored" data-anchor-id="updating-the-spark-configuration-files">Updating the Spark configuration files</h3>
+<p>Rename spark-defaults.conf.template to spark-defaults.conf. The file can be found at spark-3.3.2-bin-hadoop3/conf/spark-defaults.conf.template.</p>
+<p>Replace</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="at">spark.master   spark://master:7077</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>with</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="at">spark.master   yarn</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="starting-the-hdfs-and-yarn-services" class="level3">
+<h3 class="anchored" data-anchor-id="starting-the-hdfs-and-yarn-services">Starting the HDFS and YARN services</h3>
+<p>Once the configuration files are edited and the PATH is updated, the HDFS namenode can be formatted by running <code>hdfs namenode -format</code>.</p>
+<p>The HDFS node services can be initiated by running <code>start-dfs.sh</code>.</p>
+<p>YARN can be initiated by running <code>start-yarn.sh</code>.</p>
+<p>Ensure that these services are running by running the <code>jps</code> command.</p>
+<p>The head node will have the services <code>NameNode</code> and <code>ResourceManager</code> running. Remember that these services run only on the head node.</p>
+<p>If used as a data node, it will also have the services <code>DataNode</code> and <code>NodeManager</code> running on it.</p>
+<p>The slave nodes will have <code>DataNode</code> and <code>NodeManager</code> running on it.</p>
+</section>
+</section>
+</section>
+<section id="monitoring-the-services" class="level1">
+<h1>Monitoring the services</h1>
+<p>Initiate the history server by running <code>$SPARK_HOME/sbin/start-history-server.sh</code>.</p>
+<p>This can be accessed at <code>http://localhost:8088</code>.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<script src="https://giscus.app/client.js" data-repo="naveenk2022/website-giscus-comments" data-repo-id="R_kgDOKri3cw" data-category="Announcements" data-category-id="DIC_kwDOKri3c84Ca1Xu" data-mapping="pathname" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

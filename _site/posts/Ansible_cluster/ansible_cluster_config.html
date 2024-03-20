@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.433">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Naveen Kannan">
+<meta name="dcterms.date" content="2023-06-24">
+<meta name="description" content="Using a containerized instance of Ansible to remotely connect to a cluster and perform a simple ping task to confirm connection.">
+
+<title>Using Ansible to remotely configure a cluster.</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+<meta property="og:title" content="Using Ansible to remotely configure a cluster.">
+<meta property="og:description" content="Using a containerized instance of Ansible to remotely connect to a cluster and perform a simple ping task to confirm connection.">
+<meta property="og:image" content="https://naveenkannan.netlify.app/posts/ansible_cluster/Ansible_logo.png">
+<meta property="og:image:height" content="1722">
+<meta property="og:image:width" content="1400">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Naveen Kannan</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html" rel="" target="">
+ <span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../publications.html" rel="" target="">
+ <span class="menu-text">Publications</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../portfolio.html" rel="" target="">
+ <span class="menu-text">Portfolio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../blog_main.html" rel="" target="">
+ <span class="menu-text">Blog Posts</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/naveenk2022" rel="" target=""><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://linkedin.com/in/naveen-kannan-177120118" rel="" target=""><i class="bi bi-linkedin" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/naveenk2022/CV/blob/master/CV.pdf" rel="" target=""><i class="bi bi-file-person" role="img">
+</i> 
+ <span class="menu-text">CV</span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-is-ansible" id="toc-what-is-ansible" class="nav-link active" data-scroll-target="#what-is-ansible">What is Ansible?</a></li>
+  <li><a href="#what-does-ansible-do" id="toc-what-does-ansible-do" class="nav-link" data-scroll-target="#what-does-ansible-do">What does Ansible do?</a></li>
+  <li><a href="#potential-use-case-scenario" id="toc-potential-use-case-scenario" class="nav-link" data-scroll-target="#potential-use-case-scenario">Potential Use Case Scenario</a></li>
+  <li><a href="#the-ansible-dockerfile" id="toc-the-ansible-dockerfile" class="nav-link" data-scroll-target="#the-ansible-dockerfile">The Ansible Dockerfile</a></li>
+  <li><a href="#setting-up-the-ssh-connections" id="toc-setting-up-the-ssh-connections" class="nav-link" data-scroll-target="#setting-up-the-ssh-connections">Setting up the SSH connections</a>
+  <ul class="collapse">
+  <li><a href="#generating-an-ssh-key" id="toc-generating-an-ssh-key" class="nav-link" data-scroll-target="#generating-an-ssh-key">Generating an SSH key</a></li>
+  <li><a href="#editing-the-config-file-in-.ssh-to-set-up-a-jump-host" id="toc-editing-the-config-file-in-.ssh-to-set-up-a-jump-host" class="nav-link" data-scroll-target="#editing-the-config-file-in-.ssh-to-set-up-a-jump-host">Editing the <code>config</code> file in <code>.ssh</code> to set up a jump host</a></li>
+  <li><a href="#exchanging-ssh-keys-with-the-head-node" id="toc-exchanging-ssh-keys-with-the-head-node" class="nav-link" data-scroll-target="#exchanging-ssh-keys-with-the-head-node">Exchanging SSH keys with the head node</a></li>
+  <li><a href="#exchanging-ssh-keys-with-the-cluster-nodes" id="toc-exchanging-ssh-keys-with-the-cluster-nodes" class="nav-link" data-scroll-target="#exchanging-ssh-keys-with-the-cluster-nodes">Exchanging SSH keys with the cluster nodes</a></li>
+  <li><a href="#direct-ssh-connections-into-the-head-node-and-the-cluster-nodes" id="toc-direct-ssh-connections-into-the-head-node-and-the-cluster-nodes" class="nav-link" data-scroll-target="#direct-ssh-connections-into-the-head-node-and-the-cluster-nodes">Direct SSH connections into the head node and the cluster nodes</a></li>
+  </ul></li>
+  <li><a href="#testing" id="toc-testing" class="nav-link" data-scroll-target="#testing">Testing!</a></li>
+  <li><a href="#things-to-remember" id="toc-things-to-remember" class="nav-link" data-scroll-target="#things-to-remember">Things to Remember</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Using Ansible to remotely configure a cluster.</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Computing</div>
+    <div class="quarto-category">Clusters</div>
+    <div class="quarto-category">Discussion</div>
+    <div class="quarto-category">Ansible</div>
+    <div class="quarto-category">Docker</div>
+    <div class="quarto-category">Containers</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Using a containerized instance of Ansible to remotely connect to a cluster and perform a simple ping task to confirm connection.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Naveen Kannan </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">June 24, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="what-is-ansible" class="level1">
+<h1>What is Ansible?</h1>
+<p>Ansible is an open-source IT automation tool that allows for automated management of remote systems.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../..\posts/ansible_cluster/Ansible_logo.png" class="img-fluid figure-img" width="488"></p>
+</figure>
+</div>
+<p>A basic Ansible environment has the following three components:</p>
+<ul>
+<li><p><strong>Control Node</strong>: This is a system on which Ansible is installed, and the system from which Ansible commands such as <code>ansible-inventory</code> are issued. This is also where Ansible playbooks and configuration files are stored.</p></li>
+<li><p><strong>Managed node</strong>: This is a remote system that Ansible intends to manage and configure.</p></li>
+<li><p><strong>Inventory</strong>: This is a list of managed nodes that are organized locally on the <strong>control node</strong>. This lists the IP addresses or the hostnames of the remote systems being managed along with any connection information needed.</p></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="ansible_architecture.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">A flowchart demonstrating the basic architecture of an Ansible environment.</figcaption>
+</figure>
+</div>
+</section>
+<section id="what-does-ansible-do" class="level1">
+<h1>What does Ansible do?</h1>
+<p>Ansible uses a declarative language in the YAML format to describe the <em>desired end state</em> of the managed nodes, and it can connect to these managed nodes via standard protocols like SSH and handle the execution of the tasks required to acheive this end state. These are done via YAML-based files called <strong>Playbooks</strong>.</p>
+<p><strong>Playbooks</strong> are automation blueprints, in the <code>YAML</code> format. Playbooks contain <strong>plays</strong>, which are a list of tasks that map to each managed node in the predefined inventory.</p>
+<p><strong>Tasks</strong> are a list of one or more modules that define the operations that Ansible can perform.</p>
+<p>A <strong>Module</strong> is a unit of code that Ansible can run on managed nodes.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="ansible_playbook_structure.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+<p>The key features of Ansible that make it deal to perform automated configuration management of remote systems are as follows:</p>
+<ul>
+<li><p><strong>Agentless Architecture</strong>: Ansible only needs to be installed on the Control Node, and the Managed nodes do not require Ansible to be installed.</p></li>
+<li><p><strong>Idempotent Execution</strong>: Ansible ensures that no matter how many time the same Playbook is run, the end state of the managed nodes will be the same, regardless of the initial state of the managed node.</p></li>
+</ul>
+</section>
+<section id="potential-use-case-scenario" class="level1">
+<h1>Potential Use Case Scenario</h1>
+<p>Now, let’s get into the meat of the post, which is about using Ansible to connect to a cluster and configure each node of the cluster.</p>
+<p>Let’s assume that we’ve been given access to a sparkling new cluster for computing purposes.</p>
+<p>The cluster has a head node, and several individual cluster nodes.</p>
+<p>Now, the head node has both a public and a private IP address.</p>
+<p>The cluster nodes, however, only have private IP addresses, and can only be connected to via the head node.</p>
+<p>We intend to use Ansible to automate and configure the cluster and it’s nodes.</p>
+<p>Instead of downloading and installing Ansible on the head node of the cluster, we intend to use a dockerized version of Ansible to connect to the cluster.</p>
+<p>Let’s assume that the head node has the hypothetical IP address XXX.XX.XXX.X.</p>
+<p>Let’s also assume that there are three cluster nodes, each with private IP addresses in the format of:</p>
+<ul>
+<li>YY.Y.Y.2</li>
+<li>YY.Y.Y.3</li>
+<li>YY.Y.Y.4</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="cluster_config.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">The example use case for Ansible.</figcaption>
+</figure>
+</div>
+</section>
+<section id="the-ansible-dockerfile" class="level1">
+<h1>The Ansible Dockerfile</h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Loading from a miniconda3 image</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">FROM</span> continuumio/miniconda3</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Installing Mamba using Conda.</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># I find Mamba to be much faster for package installation compared to Conda. </span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> conda install <span class="at">-c</span> conda-forge mamba <span class="at">-y</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating a Mamba ENV called `ansible_env`.</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> mamba create <span class="at">-y</span> <span class="at">-n</span> ansible_env</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Setting the new environment as the default</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> echo <span class="st">"conda activate ansible_env"</span> <span class="op">&gt;&gt;</span> ~/.bashrc</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ex">SHELL</span> [<span class="st">"/bin/bash"</span>, <span class="st">"--login"</span>, <span class="st">"-c"</span>]</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">#Installing Linux based dependencies</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> apt-get update <span class="kw">&amp;&amp;</span> <span class="dt">\</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="ex">apt-get</span> install <span class="at">-y</span> git nano software-properties-common gcc wget build-essential ssh less screen <span class="kw">&amp;&amp;</span> <span class="dt">\</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="ex">apt-get</span> clean <span class="kw">&amp;&amp;</span> <span class="dt">\</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rm</span> <span class="at">-rf</span> /var/lib/apt/lists/<span class="pp">*</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">#Installing ansible using mamba</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> mamba install <span class="at">-y</span> <span class="at">-c</span> conda-forge ansible</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Generating a configuration file for Ansible.</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># This will need to placed in a particular directory. </span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="ex">WORKDIR</span> /etc</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> ansible-config init <span class="at">--disabled</span> <span class="at">-t</span> all <span class="op">&gt;</span> ansible.cfg</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating an ansible folder in /etc/ to mount the hosts file</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="ex">WORKDIR</span> ../</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> mkdir /etc/ansible</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating the entrypoint</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="ex">ENTRYPOINT</span> <span class="pp">[</span><span class="st">"/bin/bash"</span><span class="pp">]</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The above Docker image will require you to create a file called <code>hosts</code> to be mounted to <code>/etc/ansible</code> inside the container. This <code>hosts</code> file will be the inventory.</p>
+<p>By default, Ansible expects the inventory file to be located at <code>/etc/ansible/hosts</code>.</p>
+<p>The inventory is a list of the managed nodes you intend to connect to, and this is what we will be using to assess if the SSH connection has been set up properly.</p>
+<p>The <code>hosts</code> file can be in <code>INI</code> or <code>YAML</code> formats. I went with <code>INI</code>, as follows:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[cluster]</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dt">XXX.XX.XXX.X</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="dt">YY.Y.Y.2</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="dt">YY.Y.Y.3</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="dt">YY.Y.Y.4</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">[head_node]</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="dt">XXX.XX.XXX.X</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">[cluster_nodes]</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="dt">YY.Y.Y.2</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="dt">YY.Y.Y.3</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="dt">YY.Y.Y.4</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>I first defined the cluster using all of it’s nodes, both the head node and the cluster nodes. I then defined the head node and cluster node seperately, forming groups, making running potential tasks on individual node types easier.</p>
+<p>I created a folder called <code>ansible_mount</code> on the host directory, and created the <code>hosts</code> file there. I will be using <code>ansible_mount</code> to mount all the directories we will need in this tutorial.</p>
+</section>
+<section id="setting-up-the-ssh-connections" class="level1">
+<h1>Setting up the SSH connections</h1>
+<p>Ansible will need to be able to SSH directly into all the managed nodes in order to be able to perform tasks on each of them.</p>
+<p>However, in our example set-up, it is not possible to directly SSH into the cluster nodes using their private IP addresses. (At least, not without some configuration.) This requires us to use the head node as a jump server and edit the SSH configuration file.</p>
+<p>For the sake of making this process easier to understand, follow this flow chart for a break down of the individual steps.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="ssh_flowchart.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+<section id="generating-an-ssh-key" class="level2">
+<h2 class="anchored" data-anchor-id="generating-an-ssh-key">Generating an SSH key</h2>
+<p>I created a folder inside the <code>ansible_mount</code> directory called <code>.ssh</code>.</p>
+<p>I mounted <code>/path/to/ansible_mount/.ssh</code> to <code>/root/.ssh</code> in the Docker container.</p>
+<p>Then, once within the Docker instance, I ran <code>ssh-keygen -t ed25519</code> to generate a SSH key inside <code>/root/.ssh</code>.</p>
+<p>Since the folder is mounted, <em>this key persists, and is not deleted</em> after termination of the container.</p>
+<p>This generates two things. <code>id_ed25519</code>, and <code>id_ed25519.pub</code>.</p>
+<p><code>id_ed25519</code> is the private key and cannot be shared under any circumstances.</p>
+<p><code>id_ed25519.pub</code> is our public key, and this is what we shall use to connect to the 4 nodes.</p>
+</section>
+<section id="editing-the-config-file-in-.ssh-to-set-up-a-jump-host" class="level2">
+<h2 class="anchored" data-anchor-id="editing-the-config-file-in-.ssh-to-set-up-a-jump-host">Editing the <code>config</code> file in <code>.ssh</code> to set up a jump host</h2>
+<p>Now, in order to be able to SSH into the clusters of the nodes in one line of code, I created a config file <code>config</code> at <code>path/to/ansible_mount/.ssh/config</code>.</p>
+<p>Since the entirety of <code>path/to/ansible_mount/.ssh</code> is being mounted into the container at <code>/root/.ssh</code>, this config file will persist.</p>
+<p>To reiterate, <code>path/to/ansible_mount/.ssh</code> contains both the keys and the <code>config</code> file.</p>
+<p>This config file has the following text:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">Host</span> XXX.XX.XXX.X</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="ex">HostName</span> abc.host.domain</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ex">Host</span> YY.Y.Y.2</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyJump</span> sudo_user@XXX.XX.XXX.X</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="ex">Host</span> YY.Y.Y.3</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyJump</span> sudo_user@XXX.XX.XXX.X</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="ex">Host</span> YY.Y.Y.4</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyJump</span> sudo_user@XXX.XX.XXX.X</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This sets up the head node as a jump server <em>through which</em> we can SSH into the cluster nodes using the private IP.</p>
+<p>This allows for using XXX.XX.XXX.X(the head node of the cluster) as an intermediate server from which one can jump directly into the clusters.</p>
+<p>Here, the term <code>sudo_user</code> refers to the user(s) who have sudo access to the head node.</p>
+</section>
+<section id="exchanging-ssh-keys-with-the-head-node" class="level2">
+<h2 class="anchored" data-anchor-id="exchanging-ssh-keys-with-the-head-node">Exchanging SSH keys with the head node</h2>
+<p>However, first I needed to set up a key exchange between the Docker container and the head node, so that I could <strong>directly SSH into the head node without a need for a password.</strong></p>
+<p>Connecting to a server for the first time through SSH requires input from the user to establish the authenticity of the host. Manually SSH into the head node if you’re doing this for the first time to confirm the authenticity of the host.</p>
+<p>You will see something like this if you’re connecting to the head node for the first time:</p>
+<pre><code>The authenticity of host 'YY.Y.Y.4 (&lt;no hostip for proxy command&gt;)' can't be established.
+ECDSA key fingerprint is xxx.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? </code></pre>
+<p>Make sure to type in <code>yes</code> and accept this process.</p>
+<p>From the docker container, I ran:</p>
+<p><code>ssh-copy-id -i /root/.ssh/id_ed25519.pub sudo_user@abc.host.domain</code></p>
+<p>You will see something like:</p>
+<pre><code>/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_ed25519.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys</code></pre>
+<p>Enter your password when prompted and you should see:</p>
+<pre><code>Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'sudo_user@abc.host.domain'"
+and check to make sure that only the key(s) you wanted were added.</code></pre>
+<p>This has copied the public key from the docker container into the head node at <code>/.ssh/authorized_keys</code>.</p>
+<p>This made the docker container trusted by the head node, so when SSH’ing into the head node, there is no need for a password.</p>
+<p>Test this out by running <code>ssh sudo_user@abc.host.domain</code> and see if it gets you into the head node without prompting you for a password.</p>
+</section>
+<section id="exchanging-ssh-keys-with-the-cluster-nodes" class="level2">
+<h2 class="anchored" data-anchor-id="exchanging-ssh-keys-with-the-cluster-nodes">Exchanging SSH keys with the cluster nodes</h2>
+<p>As said before, connecting to a server for the first time through SSH requires input from the user to establish the authenticity of the host. However, this is a bit more complicated for the cluster nodes. This will require you to do the following:</p>
+<p>Once in the container, run:</p>
+<p><code>ssh -J sudo_user@abc.host.domain sudo_user@Y.Y.Y.2</code></p>
+<p>To connect to the cluster node using the head node as a jump node. This uses the head node as a jump server between the container and the cluster node.</p>
+<p>Accept the connection process as before and enter the password for the <code>sudo_user</code> on the cluster node.</p>
+<p>Do the same for all the nodes.</p>
+<p><em>Make sure you accept the authenticity of the host by performing the above ssh command before proceeding!</em></p>
+<p>Now, running these commands:</p>
+<p><code>ssh sudo_user@XX.X.X.2</code></p>
+<p><code>ssh sudo_user@XX.X.X.3</code></p>
+<p><code>ssh sudo_user@XX.X.X.4</code></p>
+<p>Allowed me to directly SSH into the cluster nodes as the user <code>sudo_temp</code> <em>from the container</em>, since we set up the <code>ProxyJump</code> function using the XXX.XX.XXX.X IP address of the head node!</p>
+<p>Note that running these commands before completing the fingerprinting process will fail. You will need to manually connect to the clusters individually first.</p>
+<p>However, this would still require me to enter the password for <code>sudo_user@XXX.XX.XXX.X</code>, since the cluster nodes did not have the keys in the docker container exchanged with it.</p>
+<p>From the container, I ran:</p>
+<p><code>ssh-copy-id -i /root/.ssh/id_ed25519.pub sudo_user@&lt;private_IP_address_for_cluster&gt;</code></p>
+<p>For every single cluster. Enter the password when prompted. Again, like before, you should see something like:</p>
+<pre><code>/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_ed25519.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys</code></pre>
+<p>Enter your password for the <code>sudo_user</code> on the cluster nodes. Again, you should see something like:</p>
+<pre><code>Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'sudo_user@YY.Y.Y.2'"
+and check to make sure that only the key(s) you wanted were added.</code></pre>
+<p>Test the key exchange process by running:</p>
+<p><code>ssh sudo_user@YY.Y.Y.2</code>.</p>
+<p>Do the same for all the other cluster nodes.</p>
+<p>This copied the public key of the docker container into the authorized_keys for the 3 servers.</p>
+</section>
+<section id="direct-ssh-connections-into-the-head-node-and-the-cluster-nodes" class="level2">
+<h2 class="anchored" data-anchor-id="direct-ssh-connections-into-the-head-node-and-the-cluster-nodes">Direct SSH connections into the head node and the cluster nodes</h2>
+<p>Now it was possible to SSH into all 4 servers, <strong>without needing to enter a password</strong>.</p>
+<p>For the head node, it was with the command:</p>
+<p><code>ssh sudo_user@abc.host.domain</code></p>
+<p>For the cluster nodes, it was with the command:</p>
+<p><code>ssh &lt;private_IP_address_for_cluster&gt; -l sudo_user</code></p>
+<p>This is essential to streamline the process by which Ansible can connect to the cluster nodes, since otherwise it would need the inventory files and the configuration files edited to enable ProxyJump and SSH password entry.</p>
+<p>Ansible allows for using of a -u flag for user, and -u will always be <code>sudo_user</code>, since the keys are authorized for user temp.</p>
+</section>
+</section>
+<section id="testing" class="level1">
+<h1>Testing!</h1>
+<p>Initiate the docker container in interactive mode, making sure to mount:</p>
+<ul>
+<li><code>/path/to/ansible_mount/.ssh</code> from the host directory to <code>/root/.ssh</code> in the container directory.</li>
+<li><code>/path/to/ansible_mount/hosts</code> from the host directory to <code>/etc/ansible/hosts</code> in the container directory.</li>
+</ul>
+<p>Once inside, run</p>
+<p><code>ansible all -m ping -u &lt;sudo_user&gt;</code></p>
+<p>Replacing <code>&lt;sudo_user&gt;</code> with the user who has SSH access to the nodes.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">XXX.XX.XXX.X</span> <span class="kw">|</span> <span class="ex">SUCCESS</span> =<span class="op">&gt;</span> {</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ansible_facts"</span><span class="ex">:</span> {</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"discovered_interpreter_python"</span><span class="ex">:</span> <span class="st">"/usr/libexec/platform-python"</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="er">}</span><span class="ex">,</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"changed"</span><span class="ex">:</span> false,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ping"</span><span class="ex">:</span> <span class="st">"pong"</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="ex">YY.Y.Y.4</span> <span class="kw">|</span> <span class="ex">SUCCESS</span> =<span class="op">&gt;</span> {</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ansible_facts"</span><span class="ex">:</span> {</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">"discovered_interpreter_python"</span><span class="ex">:</span> <span class="st">"/usr/bin/python3"</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="er">}</span><span class="ex">,</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"changed"</span><span class="ex">:</span> false,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ping"</span><span class="ex">:</span> <span class="st">"pong"</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="ex">YY.Y.Y.2</span> <span class="kw">|</span> <span class="ex">SUCCESS</span> =<span class="op">&gt;</span> {</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ansible_facts"</span><span class="ex">:</span> {</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">"discovered_interpreter_python"</span><span class="ex">:</span> <span class="st">"/usr/bin/python3"</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="er">}</span><span class="ex">,</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"changed"</span><span class="ex">:</span> false,</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ping"</span><span class="ex">:</span> <span class="st">"pong"</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="ex">YY.Y.Y.3</span> <span class="kw">|</span> <span class="ex">SUCCESS</span> =<span class="op">&gt;</span> {</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ansible_facts"</span><span class="ex">:</span> {</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>        <span class="st">"discovered_interpreter_python"</span><span class="ex">:</span> <span class="st">"/usr/bin/python3"</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="er">}</span><span class="ex">,</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"changed"</span><span class="ex">:</span> false,</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ping"</span><span class="ex">:</span> <span class="st">"pong"</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>should be the successful output.</p>
+</section>
+<section id="things-to-remember" class="level1">
+<h1>Things to Remember</h1>
+<p>Remember that the keys generated on the host directory pose a security risk if the private keys are shared.</p>
+<p>Also remember that the <code>docker run</code> command may become large and unwieldly depending on the folders needed to be mounted.</p>
+<p>The example dockerfile shared here was used to build an image that can be located on Dockerhub at <code>bush/ansible:latest</code>.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<script src="https://giscus.app/client.js" data-repo="naveenk2022/website-giscus-comments" data-repo-id="R_kgDOKri3cw" data-category="Announcements" data-category-id="DIC_kwDOKri3c84Ca1Xu" data-mapping="pathname" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

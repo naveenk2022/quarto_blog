@@ -1,0 +1,39 @@
+project:
+  type: website
+
+website:
+  open-graph: true
+  navbar:
+    search: true
+    title: "Naveen Kannan"
+    href: about.qmd
+    background: primary
+    left:
+      - text: "About"
+        file: about.qmd
+      - text: "Publications"
+        file: publications.qmd
+      - text: "Portfolio"
+        file: portfolio.qmd
+      - text: "Blog Posts"
+        file: blog_main.qmd
+    right:
+      - icon: github
+        href: https://github.com/naveenk2022
+      - icon: linkedin
+        href: https://linkedin.com/in/naveen-kannan-177120118
+      - icon: file-person
+        text: CV
+        href: https://github.com/naveenk2022/CV/blob/master/CV.pdf
+
+      
+format:
+  html:
+    theme: 
+      light: [flatly, light.scss]
+      dark: [darkly, dark.scss]
+    css: styles.css
+    toc: true
+
+editor: visual
+

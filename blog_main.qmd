@@ -1,0 +1,9 @@
+---
+title: "My Blog Posts."
+description: 'An assortment of Data Science related blog posts. Updated semi-regularly.'
+listing:
+  contents: posts
+  sort: "date desc"
+  type: default
+  categories: true
+---

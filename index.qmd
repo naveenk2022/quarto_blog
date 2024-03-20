@@ -1,0 +1,88 @@
+---
+title: "Naveen Kannan"
+about:
+  template: jolla
+  image: images/avatar.jpg
+  links:
+    - icon: linkedin
+      text: Linkedin
+      href: https://linkedin.com/in/naveen-kannan-177120118
+    - icon: mortarboard-fill
+      text: Google Scholar 
+      href: https://scholar.google.com/citations?hl=en&user=RoRCNVIAAAAJ
+    - icon: github
+      text: Github
+      href: https://github.com/naveenk2022
+---
+
+Hey! Welcome to my website.
+
+I'm a Research Associate in the Department of Population and Quantitative Health Sciences at Case Western Reserve University. My research interests include Deep Learning, Bioinformatics, Biostatistics and Geospatial Analytics. In my spare time I enjoy art, swimming, hiking and cooking.
+
+This is my personal little nerd cave. I like to share the work I do on my blog. I hope you find something useful here!
+
+------------------------------------------------------------------------
+
+## Education
+
+**MS in Biomedical and Health Informatics**
+
+Case Western Reserve University \| Cleveland - Ohio
+
+January 2022 - August 2023
+
+**MBBS (Bachelor of Medicine and Bachelor of Surgery)**
+
+Madras Medical College \| Chennai, India
+
+September 2016 - March 2020
+
+------------------------------------------------------------------------
+
+## Experience
+
+**Research Associate**
+
+Department of Population and Quantitative Health Sciences, Case Western Reserve University
+
+May 2023 - Present
+
+------------------------------------------------------------------------
+
+**Graduate Research Assistant**
+
+Department of Population and Quantitative Health Sciences, Case Western Reserve University
+
+January 2023 - May 2023
+
+------------------------------------------------------------------------
+
+**Graduate Research Assistant**
+
+GIS Health and Hazards Lab, Department of Population and Quantitative Health Sciences, Case Western Reserve University
+
+May 2022 - December 2022
+
+------------------------------------------------------------------------
+
+**Medical Observer**
+
+Kauvery Hospitals, Chennai, India
+
+October 2020 - March 2021
+
+------------------------------------------------------------------------
+
+**Junior Resident Doctor**
+
+Department of Psychiatry, Saveetha Medical College, India
+
+July 2020 - September 2020
+
+------------------------------------------------------------------------
+
+**Intern Doctor**
+
+Madras Medical College, Chennai, India
+
+March 2019 - March 2020

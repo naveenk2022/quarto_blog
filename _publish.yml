@@ -1,0 +1,4 @@
+- source: project
+  netlify:
+    - id: cd544510-0995-41f0-8d32-17f83edfada3
+      url: 'https://naveenkannan.netlify.app'

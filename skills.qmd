@@ -1,0 +1,62 @@
+
+# Naveen Kannan's Data Analytics Skills {#centered-heading .center-heading}
+
+# Python {#centered-heading .center-heading}
+
+## PANDAS, Keras, Numpy, scikitlearn, PySpark and TensorFlow {.center-heading}
+
+-   Proficient in the Python programming language and related packages such as pandas, NumPy, and scipy for data manipulation, exploration, and analysis.
+
+-   Experienced in statistical analysis and modeling using Python, including regression analysis, time series analysis, clustering, and classification using packages such as statsmodels and scikit-learn.
+
+-   Skilled in machine learning techniques such as decision trees, random forests, gradient boosting, and neural networks using packages such as TensorFlow, Keras, and PyTorch.
+
+-   Experienced in using visualization tools such as Matplotlib, Seaborn, and Plotly for creating static and interactive visualizations.
+
+-   Proficient in data preparation and cleaning using pandas and related packages, and able to handle missing values, outliers, and data transformations.
+
+-   Skilled in feature engineering using techniques such as one-hot encoding, scaling, and feature selection.
+
+-   Experienced in using scikit-learn for model selection, hyperparameter tuning, and evaluation using techniques such as cross-validation and ensemble methods.
+
+-   Comfortable with using Jupyter notebooks for interactive data analysis and reporting.
+
+# R {.center-heading}
+
+## Advanced Statistical Analysis, Regression Analysis {.center-heading}
+
+-   Proficient in the R programming language and related packages such as tidyverse, ggplot2, dplyr, and data.table for data manipulation, exploration, and visualization.
+
+-   Experienced in statistical analysis and modeling using R, including regression analysis, time series analysis, clustering, and classification.
+
+-   Experienced in using visualization tools such as ggplot2 and Shiny for creating interactive dashboards and reports to communicate insights to stakeholders.
+
+# Data Visualization {.center-heading}
+
+## ggplot, gt, and matplotlib {.center-heading}
+
+-   Familiar with ggplot2, a popular data visualization package in R, and able to create a wide range of visualizations such as scatter plots, box plots, and density plots using the Grammar of Graphics framework.
+
+-   Experienced in creating publication-quality plots and charts using Matplotlib and related libraries such as Seaborn and Plotly, as well as ggplot in R.
+
+-   Experienced in creating publication-quality tables for scientific journals.
+
+# Big Data Tools {.center-heading}
+
+## Hadoop, PySpark and SQL {.center-heading}
+
+-   Proficient in PySpark, a Python library for Apache Spark, for large-scale data processing and machine learning tasks, including data transformation, feature engineering, and model training.
+
+-   Experienced in working with Hadoop distributed computing system and related technologies such as HDFS.
+
+-   Skilled in writing and optimizing SQL queries for data extraction and analysis, using various database management systems.
+
+# Linux {.center-heading}
+
+## CLI, Docker, Bash scripting and Apache Web Server {.center-heading}
+
+-   Proficient in Linux operating system and command-line interface, including shell scripting, file system management, package installation, and system administration.
+
+-   Experienced in managing Linux-based servers for hosting data science applications, using technologies such as Docker, and Apache web server.
+
+-   Comfortable with programming languages commonly used in Linux environment such as Python, R, and Bash scripting.

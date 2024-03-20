@@ -1,0 +1,264 @@
+---
+title: ""
+---
+
+# Geospatial Analytics
+
+## Mapping the Environmental Impact of the 2023 Norfolk Southern Train Derailment in East Palestine, Ohio
+
+This dashboard maps the environmental impact of the 2023 Norfolk Southern train derailment in East Palestine, Ohio on the states of Ohio, West Virginia and Pennsylvania across a two month period.
+
+This project was coded entirely by me, with the interactive dashboard built in R using Shiny apps, and geo-visualization performed using GIS programming with Python and R.
+
+Data for the project was obtained by coding scripts that scraped the internet for government created, publicly available datasets. Primarily, data was obtained from the USGS (United States Geological Survey) and AirNow.
+
+[Find it here.](https://naveen-kannan.shinyapps.io/final_east_palestine_dashboard_2/)
+
+Shiny Widgets and Dashboard are dynamic, so I cannot directly render the dashboard here. However, it's easily available at the above link!
+
+![](images/Dashboard_image.jpg){fig-align="center"}
+
+A screencap of the dashboard. It allows for visualization of a choropleth map for the zipcodes within a 30 mile buffer zone around the train derailment site in East Palestine, Ohio. It allows for visualization of the trend of the changes in AQI values across the months of January and February, 2023.
+
+![](images/map_viz.jpg){fig-align="center"}
+
+This part of the dashboard is a choropleth map that displays the air quality indices of the counties within a 30 mile buffer zone around the derailment site.
+
+This map is interactive. When a county is clicked, it displays the air quality trend for the county across the study period, with indicators showing the selected date and the date of the derailment, in the form of a time series plot.
+
+![](images/time-series-plot.jpg)
+
+The dashboard has a date slider, allowing for visualization of the choropleth map and it's accompanying time series plot on the selected date.
+
+![](images/date_slider.jpg){fig-align="center"}
+
+This dashboard was built as part of the final project for PQHS 427 at Case Western Reserve University, Department of Population Health and Quantitative Health Sciences.
+
+[Find the GitHub Repo here. This includes the datasets I used.](https://github.com/naveenk2022/East-Palestine-Environment-Dashboard)
+
+## ArcGIS and QGIS
+
+The following maps have been made using ArcGIS and open source applications such as QGIS.
+
+![](images/Spring%20Break%20Assignment.jpg){fig-align="center"}
+
+![](images/2020-08-01%20to%202020-11-01%20positivity%20rates1024_1.jpg){fig-align="center"}
+
+## Python and Geospatial Analytics
+
+I worked with the GIS Health and Hazards Lab in the Department of Population and Quantitative Health Sciences to work on mapping refugee camp sites in the Democratic Republic of Congo following the eruption of Mount Nyiragongo on Saturday, May 2021.
+
+I created Python scripts for a multitude of tasks, including object detection and video frame parsing. These Python scripts can be found on my Github page, at the following link:
+
+<https://github.com/naveenk2022/GIS-repository>
+
+The paper containing a detailed description of the work done is currently being worked on, and I will share details and images when that happens!
+
+# Data Analysis and Visualization
+
+The following projects (mostly done on Public Health associated datasets) involve:
+
+-   Statistical analysis of data.
+
+-   Visualization of variable distribution and outcomes.
+
+-   Interpretation and presentation of the findings.
+
+## An analysis of the Population Assessment of Tobacco and Health (PATH) Study.
+
+The Population Assessment of Tobacco and Health **(PATH)** Study began originally surveying 45,971 adult and youth respondents. The study sampled over 150,000 mailing addresses across the United States to create a national sample of tobacco users and non-users, and is a collaboration between the National Institute on Drug Abuse (NIDA), National Institutes of Health (NIH), and the Center for Tobacco Products (CTP), Food and Drug Administration (FDA).
+
+This project looks at predicting e-cigarette use among adults in the United States.
+
+I asked, and answered, the following questions:
+
+*E-Cigarette Perception, Smoking Habits, and their association with Heavy E-Cigarette Use:*
+
+**Are smoking e-cigarettes that contain nicotine, the perception of the purported healthiness of e-cigarettes when compared to smoking regular cigarettes, and smoking habits strong predictors of heavy e-cigarette use in adulthood?**
+
+*Regular e-cigarette use and it's associated factors:*
+
+**Are factors such as using flavored e-cigarettes, or needing to use e-cigarettes immediately after waking up, or using e-cigarettes with nicotine, or use of e-cigarettes as a healthier alternative to regular cigarettes associated with regular e-cigarette use?**
+
+[Find it here.](portfolio_projects/PATH_study/Project_A_Portfolio_Naveen_Kannan.html)
+
+## NHANES (National Health and Nutrition Examination Survey)
+
+The National Health and Nutrition Examination Survey (NHANES) is a program of studies designed to assess the health and nutritional status of adults and children in the United States. The survey is unique in that it combines interviews and physical examinations. NHANES is a major program of the National Center for Health Statistics (NCHS). NCHS is part of the Centers for Disease Control and Prevention (CDC) and has the responsibility for producing vital and health statistics for the Nation.
+
+This project**Analysing the relationship between Blood Cholesterol levels, Physical Activity, Excessive Drinking and Depression,** [and can be found here.](portfolio_projects/NHANES_study/Study-1.html)
+
+I asked and answering the following question:
+
+**Among adults of ages 21-79 participating in NHANES 2017-18, is there a significant difference in the values of HDL cholesterol values of participants across their self-reported participation or lack thereof in vigorous weekly physical activity?**
+
+## Scooby-Doo analytics
+
+"Scooby-Doo" is a television series that has been airing for over 50 years. Centered around Mystery Inc.,a group of iconic mystery solving detectives, including Fred, Daphne, Velma, Shaggy, and the titular Scooby-Doo, a talking dog with a penchant for consuming ridiculously tall sandwiches and Scooby snacks.
+
+The data comes from Kaggle, and was part of Tidy Tuesday's dataset for 2021-07-13, and [can be found here.](https://github.com/rfordatascience/tidytuesday/blob/master/data/2021/2021-07-13/readme.md)
+
+I decided to use a more light-hearted dataset for this. However, I did perform thorough analysis of the data I had!
+
+I asked, and answered, the following questions:
+
+**Predicting an iconic catchphrase: Are the logistics of an episode of Scooby-Doo good predictors of the number of times an iconic catchphrase is spoken?**
+
+**Monster Motivation: Is it possible to predict the motive of the major antagonist of an episode of Scooby-Doo, based on the nature of the monster the antagonist appears as?**
+
+![The Mystery Inc. Gang. From left to right, Velma, Shaggy, Scooby Doo, Fred, and Daphne.](portfolio_projects/SCOOBY_study/mystery_inc.webp){fig-align="center"}
+
+[Find the project here!](portfolio_projects/SCOOBY_study/Naveen_Kannan_Project_B_Portfolio.html)
+
+## Creating a Publication-Ready Table 1
+
+The following table was created from a simulated dataset containing data on individuals with a hypertension diagnosis, receiving primary care at two primary health practices.
+
+```{r, echo = FALSE,results='hide', message = FALSE}
+
+library(tableone)
+library(knitr)
+library(rmdformats)
+library(nhanesA)
+library(kableExtra)
+library(naniar)
+library(janitor)
+library(glue)
+library(rcompanion)
+library(gt)
+library(ggridges)
+library(patchwork)
+library(plotly)
+library(broom)
+library(tidyverse)
+
+hbp3456 <- read_csv("data/hbp_3456.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  mutate(record = as.character(record))
+# Filtering to select Highland and Sycamore practices
+q1dat <- hbp3456 |>
+  filter(practice == "Highland" | practice == "Sycamore")
+# Creating the BMI variable
+q1dat$bmi <- q1dat$weight/((q1dat$height)^2)
+# Creating a BMI category variable, according to the CDC's BMI categories.
+q1dat$bmi_cat <- as_factor(ifelse(q1dat$bmi<18.5,"Underweight",
+                        ifelse((q1dat$bmi>=18.5&q1dat$bmi<=24.9),"Healthy Weight",
+                               ifelse((q1dat$bmi>=25.0&q1dat$bmi<=29.9),"Overweight","Obese"))))
+
+# Re-leveling the categorical variables 
+q1dat <- q1dat |>
+  mutate(bmi_cat = fct_relevel(bmi_cat,"Underweight","Healthy Weight","Overweight","Obese"),
+         race = fct_relevel(race,"White","AA_Black","Asian","Other"),
+         insurance = fct_relevel(insurance,"Medicaid","Medicare","Commercial","Uninsured"))
+# Renaming the variables
+tabledat <- q1dat |>
+  select(age,race,eth_hisp,sex,insurance,bmi,bmi_cat,sbp,dbp,practice) |>
+  mutate("Age - Years(Median, [IQR])" = as.double(age),
+         "Race - no.(%)" = as.factor(race),
+         "Hispanic/Latino Ethnicity - no. (%)" = as.factor(eth_hisp),
+         "Male sex - no. (%)" = as.factor(sex),
+         "Insurance Provider - no. (%)" = as.factor(insurance),
+         "Body Mass Index - kg/m^2(Median, [IQR])" = as.double(bmi),
+         "BMI Category - no. (%)" = as.factor(bmi_cat),
+         "Systolic Blood Pressure - mm/Hg(Median, [IQR])" = as.double(sbp),
+         "Diastolic Blood Pressure - mm/Hg(Median, [IQR])" = as.double(dbp))
+
+# Assigning the variables to be compared according to the practice
+table1.vars <- c("Age - Years(Median, [IQR])",
+                 "Race - no.(%)",
+                 "Hispanic/Latino Ethnicity - no. (%)",
+                 "Male sex - no. (%)",
+                 "Insurance Provider - no. (%)",
+                 "Body Mass Index - kg/m^2(Median, [IQR])",
+                 "BMI Category - no. (%)",
+                 "Systolic Blood Pressure - mm/Hg(Median, [IQR])",
+                 "Diastolic Blood Pressure - mm/Hg(Median, [IQR])")
+table1.practice <- c("practice")
+
+# Creating a tableone object 
+tableone <- CreateTableOne(data = tabledat, 
+                       vars = table1.vars, 
+                       strata = table1.practice)
+
+# Creating `tab1_word` with appropriate formatting. 
+tab1_word <- print(tableone,
+      nonnormal = c("Age - Years(Median, [IQR])","Body Mass Index - kg/m^2(Median, [IQR])","Systolic Blood Pressure - mm/Hg(Median, [IQR])","Diastolic Blood Pressure - mm/Hg(Median, [IQR])"),
+      quote = F,
+      noSpaces = T,
+      test = T,
+      contDigits = 1,
+      dropEqual = T,
+      explain = F)
+# Convert to dataframe
+tab1_df <- as.data.frame(tab1_word) |> rownames_to_column(var = "Characteristics") |> select(Characteristics,Highland,Sycamore,p)
+
+# Rename first variable from n to No.
+tab1_df$Characteristics[1] <- "no."
+```
+
+```{r, echo = FALSE}
+gt_tbl <- gt(tab1_df)
+gt_tbl <- gt_tbl |>
+  tab_header(
+    title = md(glue("**Table 1. Baseline characteristics of {nrow(q1dat)} individuals with a diagnosis of hypertension, receiving primary care at Highland and Sycamore practices.**")),
+    subtitle = "Data taken from a simulated dataset."
+  ) |>
+  tab_footnote(
+    footnote = "These variables are missing no more than 4% of their values.",
+    locations = cells_body(columns = Characteristics, rows = c(3,8,15,16))
+  ) |>
+  tab_footnote(
+    footnote = "kg/m^2 = Kilograms per square Meter.",
+    locations = cells_body(columns = Characteristics, rows = 15)
+  ) |>
+  tab_footnote(
+    footnote = "IQR = Interquantile Range.",
+    locations = cells_body(columns = Characteristics, rows = c(2,15,21,22))
+  ) |>
+  tab_footnote(
+    footnote = "Numbers are No. (%) unless otherwise noted.",
+    locations = cells_body(columns = Characteristics, rows = c(1,3,8,9,10,16))
+  ) |>
+  tab_footnote(
+    footnote = "mm/Hg = Millimeters of mercury.",
+    locations = cells_body(columns = Characteristics, rows = c(21,22))
+  )
+gt_tbl <- gt_tbl |>
+  tab_row_group(
+    label = md("**Health Characteristics**"),
+    rows = 15:22
+  ) |>
+  tab_row_group(
+    label = md("**Demographic Characteristics**"),
+    rows = 1:14
+  ) |>
+  cols_align(
+    align = "left",
+    columns = c("Characteristics")
+  ) |>
+  cols_align(
+    align = "right",
+    columns = c("Highland","Sycamore","p")
+  )
+
+gt_tbl
+```
+
+# Presentations
+
+## IHPBA (International Hepato-Pancreato Biliary Association) 2016
+
+I presented my paper(**Kannan, N**., Vellaisamy, R., Govindarajan, M., & Gounder, K. D. (2016). [Pellagra following pancreaticoduodenectomy for malignant pancreatic carcinoid with pluripotent hormonal potential](https://doi.org/10.1016/j.hpb.2016.02.996). *HPB*, *18*, e381-e382.) at IHPBA's 12th World Congress at Sao Paulo, Brazil.
+
+## ASHG (American Society of Human Genetics) 2023
+
+Annotation and scoring of the deleteriousness of individual genetic variants in the 4th release of the Alzheimer's Disease Sequencing Project. **(PB4451)**
+
+**Naveen Kannan**^1^, Nicholas Wheeler^1^, Genome Center for Alzheimer's Disease, Li-San Wang^2^, Yuk Yee Leung^2^, William S. Bush^1^
+
+1)  Cleveland Institute for Computational Biology, Department for Population and Quantitative Health Sciences, Case Western Reserve University, Cleveland, Ohio 44106, USA.\
+2)  Department of Pathology and Laboratory Medicine, Penn Neurodegeneration Genomics Center, Perelman School of Medicine, University of Pennsylvania, Philadelphia, Pennsylvania 19104, USA.
+
+Presented at the Annual Meeting of The American Society of Human Genetics, November 3, 2023 in Washington DC.
+
+![With my amazing professor, Dr William S Bush!](images/IMG_20231103_104133_01.jpg){fig-align="center"}

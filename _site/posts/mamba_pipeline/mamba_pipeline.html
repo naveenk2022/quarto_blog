@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.433">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Naveen Kannan">
+<meta name="dcterms.date" content="2023-11-18">
+<meta name="description" content="A guide to using Mamba (over Conda) for pipeline building.">
+
+<title>Mamba implementation in Scientific Pipelines.</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+<meta property="og:title" content="Mamba implementation in Scientific Pipelines.">
+<meta property="og:description" content="A guide to using Mamba (over Conda) for pipeline building.">
+<meta property="og:image" content="https://naveenkannan.netlify.app/posts/mamba_pipeline/mamba_logo.png">
+<meta property="og:image:height" content="357">
+<meta property="og:image:width" content="557">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Naveen Kannan</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html" rel="" target="">
+ <span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../publications.html" rel="" target="">
+ <span class="menu-text">Publications</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../portfolio.html" rel="" target="">
+ <span class="menu-text">Portfolio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../blog_main.html" rel="" target="">
+ <span class="menu-text">Blog Posts</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/naveenk2022" rel="" target=""><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://linkedin.com/in/naveen-kannan-177120118" rel="" target=""><i class="bi bi-linkedin" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/naveenk2022/CV/blob/master/CV.pdf" rel="" target=""><i class="bi bi-file-person" role="img">
+</i> 
+ <span class="menu-text">CV</span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-is-mamba" id="toc-what-is-mamba" class="nav-link active" data-scroll-target="#what-is-mamba">What is Mamba?</a></li>
+  <li><a href="#why-use-mamba-over-conda" id="toc-why-use-mamba-over-conda" class="nav-link" data-scroll-target="#why-use-mamba-over-conda">Why use Mamba over Conda?</a></li>
+  <li><a href="#implementing-mamba-into-your-workflow" id="toc-implementing-mamba-into-your-workflow" class="nav-link" data-scroll-target="#implementing-mamba-into-your-workflow">Implementing Mamba into your workflow</a>
+  <ul class="collapse">
+  <li><a href="#non-containerized-mamba" id="toc-non-containerized-mamba" class="nav-link" data-scroll-target="#non-containerized-mamba">Non-containerized <code>mamba</code></a>
+  <ul class="collapse">
+  <li><a href="#miniforge" id="toc-miniforge" class="nav-link" data-scroll-target="#miniforge">Miniforge</a></li>
+  <li><a href="#micromamba" id="toc-micromamba" class="nav-link" data-scroll-target="#micromamba">Micromamba</a></li>
+  </ul></li>
+  <li><a href="#containerized-mamba-specifically-docker" id="toc-containerized-mamba-specifically-docker" class="nav-link" data-scroll-target="#containerized-mamba-specifically-docker">Containerized <code>mamba</code> (specifically Docker)</a>
+  <ul class="collapse">
+  <li><a href="#docker-based-miniforge" id="toc-docker-based-miniforge" class="nav-link" data-scroll-target="#docker-based-miniforge">Docker-based Miniforge</a></li>
+  <li><a href="#docker-based-micromamba" id="toc-docker-based-micromamba" class="nav-link" data-scroll-target="#docker-based-micromamba">Docker-based Micromamba</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#a-real-world-example-of-why-i-prefer-mamba-over-conda." id="toc-a-real-world-example-of-why-i-prefer-mamba-over-conda." class="nav-link" data-scroll-target="#a-real-world-example-of-why-i-prefer-mamba-over-conda.">A real-world example of why I prefer <code>mamba</code> over <code>conda</code>.</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Mamba implementation in Scientific Pipelines.</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Computing</div>
+    <div class="quarto-category">Containers</div>
+    <div class="quarto-category">Mamba</div>
+    <div class="quarto-category">Conda</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    A guide to using Mamba (over Conda) for pipeline building.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Naveen Kannan </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">November 18, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="what-is-mamba" class="level1">
+<h1>What is Mamba?</h1>
+<p><a href="https://github.com/mamba-org/mamba">Mamba</a> is intended to be a drop-in replacement for /reimplementation of <strong>conda</strong> (written in <strong>C++</strong>).</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="mamba_logo.png" class="img-fluid figure-img" width="307"></p>
+<figcaption class="figure-caption">The Mamba logo.</figcaption>
+</figure>
+</div>
+<p>Mamba has been something that I have implemented into all of my pipelines, since it trivializes the package management process. I do almost all of my work within the context of containers/virtual environments, and mamba makes my work life so much easier.</p>
+<p>Previously, I used to use Conda as my package manager of choice, relying on it to cut down the amount of time I would need to build an environment using <code>pip</code> as an installer. Once I discovered Mamba, however, I never went back to Conda.</p>
+</section>
+<section id="why-use-mamba-over-conda" class="level1">
+<h1>Why use Mamba over Conda?</h1>
+<p>Simple. Mamba is just faster.</p>
+<p>Conda is implemented in Python, while Mamba utilizes C++ code for critical operations (instead of Python), optimizing it’s performance.</p>
+<p>At the same time, Mamba utilizes the same command line parser, package installation and deinstallation code and transaction verification routines as Conda to stay as compatible as possible.</p>
+<p>This means that Mamba is a drop-in replacement for Conda. If you know how to use Conda, you know how to use Mamba!</p>
+<p>Mamba’s features include:</p>
+<ul>
+<li><p>multi-threaded parallel downloads of repo data and package files.</p></li>
+<li><p><code>libsolv</code> for much faster dependency solving, which is also used in the RPM package manager of Red Hat, Fedora and OpenSUSE.</p></li>
+<li><p>core parts of mamba are implemented in C++.</p></li>
+<li><p>utilizes the same command line parser, package installation and deinstallation code and transaction verification routines as Conda to stay as compatible as possible.</p></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://imgs.xkcd.com/comics/python_environment.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Maybe don’t install everything in base. (XKCD #1987)</figcaption>
+</figure>
+</div>
+<p>Conda excels in creating <strong>virtual environments</strong> that help keep your base environment clutter-free. Initiating a Conda virtual environment helps you keep the dependencies for a particular project <em>limited to that environment.</em> No need to run the risk of nuking your workflow simply because you had to install Python 2.7 as a dependency for an old package that the maintainer never got around to updating.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Remember that <code>mamba</code> environments are essentially <code>conda</code> environments with <code>mamba</code> enabled. Functionally speaking, there is no difference between a <code>mamba</code> env and a <code>conda</code> env.</p>
+</div>
+</div>
+</section>
+<section id="implementing-mamba-into-your-workflow" class="level1">
+<h1>Implementing Mamba into your workflow</h1>
+<p>Implementing Mamba into your workflow is pretty straightforward. The potential options are:</p>
+<ul>
+<li><p><strong>Mambaforge:</strong> The mambaforge installer for conda (similar to conda-forge). This allows usage of the conda-forge channel by default.</p></li>
+<li><p><strong>Micromamba:</strong> micromamba is a tiny executable version of the mamba package manager. It is a statically linked C++ executable with a separate command line interface. It does not need a base environment and does not come with a default version of Python.</p></li>
+<li><p><strong>Miniforge:</strong> Similar to miniconda. As of August 2023, virtually similar to mambaforge, and is recommended over mambaforge since it now comes with mamba installed. Miniforge used to only ship with conda.</p></li>
+</ul>
+<p>As of July 2023, Miniforge then started to ship with <code>conda-libmamba-solver</code>. Since <code>conda-libmamba-solver</code> depends on <code>libmambapy</code>, the only difference between Miniforge and Mambaforge was the presence of the mamba Python package. As of August 2023, miniforge added <code>mamba</code> as well to minimize surprises.</p>
+<ul>
+<li><strong>Existing conda Install</strong> Simply installing mamba into a pre-existing conda environment. This is not recommended by the official documentation.</li>
+</ul>
+<section id="non-containerized-mamba" class="level2">
+<h2 class="anchored" data-anchor-id="non-containerized-mamba">Non-containerized <code>mamba</code></h2>
+<p>If you’re intending on installing <code>mamba</code>, the official documentation says to ensure that <code>mamba</code> and <code>conda</code> are the only packages to be installed in the base environment.</p>
+<p>Note that as of August 2023, <code>miniforge</code> and <code>mambaforge</code> are essentially the same thing.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>From the <a href="https://github.com/conda-forge/miniforge">official miniforge documentation</a>,</p>
+<p>After the release of Miniforge 23.3.1 in August 2023, Miniforge and Mambaforge are essentially identical. The only difference is the name of the installer and subsequently the default installation path.</p>
+<p>Before that release, Miniforge only shipped conda, while Mambaforge added mamba on top. Since Miniconda started shipping conda-libmamba-solver in July 2023, Miniforge followed suit and started shipping it too in August. At that point, since conda-libmamba-solver depends on libmambapy, the only difference between Miniforge and Mambaforge was the presence of the mamba Python package. To minimize surprises, we decided to add mamba to Miniforge too.</p>
+</div>
+</div>
+<p>Given that the official documentation encourages the use of Miniforge over Mambaforge, the rest of this blog post will be looking at installing and using Miniforge.</p>
+<section id="miniforge" class="level3">
+<h3 class="anchored" data-anchor-id="miniforge">Miniforge</h3>
+<p>The <a href="https://github.com/conda-forge/miniforge">official miniforge documentation</a> has a list of installers for different operating systems and architectures.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="miniforge_installer.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">A screencap of the docs.</figcaption>
+</figure>
+</div>
+<p>The easiest way to do this is via a non-interactive method, using the following commands (for Unix-like platforms such as Mac OS &amp; Linux)</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This section assumes you already have <code>conda</code> installed and set up in the <code>base</code> environment.</p>
+</div>
+</div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">## Download the appropriate installer for your architecture and OS</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">wget</span> <span class="st">"https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-</span><span class="va">$(</span><span class="fu">uname</span><span class="va">)</span><span class="st">-</span><span class="va">$(</span><span class="fu">uname</span> <span class="at">-m</span><span class="va">)</span><span class="st">.sh"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">## Run the script in non-interactive mode.</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">## -p is prefix option. A directory will be created at "${HOME}/conda".</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">bash</span> Miniforge3-<span class="va">$(</span><span class="fu">uname</span><span class="va">)</span>-<span class="va">$(</span><span class="fu">uname</span> <span class="at">-m</span><span class="va">)</span>.sh <span class="at">-b</span> <span class="at">-p</span> <span class="st">"</span><span class="va">${HOME}</span><span class="st">/conda"</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">##  Create the path to conda</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> <span class="st">"</span><span class="va">${HOME}</span><span class="st">/conda/etc/profile.d/conda.sh"</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">## For mamba support also run the following command</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> <span class="st">"</span><span class="va">${HOME}</span><span class="st">/conda/etc/profile.d/mamba.sh"</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">## Activate the base environment</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> activate</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This above script installs <code>mamba</code> into the <code>base</code> conda environment and then activates the conda environment, enabling the usage of <code>mamba</code>. Now, using <code>mamba</code> is as simple as replacing all instances of <code>conda</code> with <code>mamba</code>!</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Remember that the only packages you want installed in the <code>base</code> conda environment are <code>mamba</code> and <code>conda</code>, nothing else.</p>
+</div>
+</div>
+</section>
+<section id="micromamba" class="level3">
+<h3 class="anchored" data-anchor-id="micromamba">Micromamba</h3>
+<p>The <a href="https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html">documentation for installation of <code>micromamba</code> can be found here.</a></p>
+<p><code>micromamba</code> is a tiny executable version of the <code>mamba</code> package manager. It is a statically linked C++ executable with a separate command line interface. It comes with an empty base environment, and does not come with a default version of Python or <code>conda</code>.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>As a prerequisite, basic utilities (such as <code>curl</code>,<code>tar</code> and <code>bzip2</code>) need to be installed. Also you need a glibc based system like Ubuntu, Fedora or Centos (Alpine Linux does not work natively).</p>
+</div>
+</div>
+<p>The following magic URL always returns the latest available version of <code>micromamba</code>, and the <code>bin/micromamba</code> part is automatically extracted using <code>tar</code>.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Linux Intel (x86_64):</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ls</span> https://micro.mamba.pm/api/micromamba/linux-64/latest <span class="kw">|</span> <span class="fu">tar</span> <span class="at">-xvj</span> bin/micromamba</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Linux ARM64:</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ls</span> https://micro.mamba.pm/api/micromamba/linux-aarch64/latest <span class="kw">|</span> <span class="fu">tar</span> <span class="at">-xvj</span> bin/micromamba</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Linux Power:</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ls</span> https://micro.mamba.pm/api/micromamba/linux-ppc64le/latest <span class="kw">|</span> <span class="fu">tar</span> <span class="at">-xvj</span> bin/micromamba</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># macOS Intel (x86_64):</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ls</span> https://micro.mamba.pm/api/micromamba/osx-64/latest <span class="kw">|</span> <span class="fu">tar</span> <span class="at">-xvj</span> bin/micromamba</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># macOS Silicon/M1 (ARM64):</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ls</span> https://micro.mamba.pm/api/micromamba/osx-arm64/latest <span class="kw">|</span> <span class="fu">tar</span> <span class="at">-xvj</span> bin/micromamba</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>After extraction is complete, the <code>micromamba</code> binary can be used.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Linux/bash:</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./bin/micromamba</span> shell init <span class="at">-s</span> bash <span class="at">-p</span> ~/micromamba  <span class="co"># this writes to your .bashrc file</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># sourcing the bashrc file incorporates the changes into the running session.</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># better yet, restart your terminal!</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> ~/.bashrc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The above code chunk incorporates the path to the <code>micromamba</code> binary into the restarted terminal.</p>
+<p>You can now activate the base environment, and build other environments.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">micromamba</span> activate  <span class="co"># this activates the base environment</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">micromamba</span> install python=3.6 jupyter <span class="at">-c</span> conda-forge</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># or</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="ex">micromamba</span> create <span class="at">-n</span> env_name xtensor <span class="at">-c</span> conda-forge</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="ex">micromamba</span> activate env_name</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="containerized-mamba-specifically-docker" class="level2">
+<h2 class="anchored" data-anchor-id="containerized-mamba-specifically-docker">Containerized <code>mamba</code> (specifically Docker)</h2>
+<p>This is my recommended method of using <code>mamba</code> or <code>micromamba</code>. If you’re using <code>mamba</code>, you’re already encouraged to use <code>conda</code> environments. If you’re using a <code>conda</code> environment, you should 100% consider incorporating the usage of containerization into your scientific workflow.</p>
+<p>Containers make scientific pipelines easy to reproduce and easy to share, two concepts which form the bedrock of responsible science.</p>
+<p><a href="https://naveenkannan.netlify.app/posts/containers_hpc/containers_HPC.html">I have a blog post about containers and why they rule. You can find it here.</a></p>
+<section id="docker-based-miniforge" class="level3">
+<h3 class="anchored" data-anchor-id="docker-based-miniforge">Docker-based Miniforge</h3>
+<p>This is very simple. Simply pull from the <code>condaforge/miniforge3:latest</code> tag.</p>
+<p>Start your <code>dockerfile</code> with the line:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">FROM</span> condaforge/miniforge3:latest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This uses <code>miniforge</code> as a base image, and now you have a base environment with <code>mamba</code> and <code>conda</code> already installed and configured.</p>
+</section>
+<section id="docker-based-micromamba" class="level3">
+<h3 class="anchored" data-anchor-id="docker-based-micromamba">Docker-based Micromamba</h3>
+<p>This is similar to the above section. Start your <code>dockerfile</code> with the line:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">FROM</span> mambaorg/micromamba:latest</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+</section>
+<section id="a-real-world-example-of-why-i-prefer-mamba-over-conda." class="level1">
+<h1>A real-world example of why I prefer <code>mamba</code> over <code>conda</code>.</h1>
+<p>Consider the following two <code>dockerfile</code>s:</p>
+<section id="conda-based-dockerfile" class="level4">
+<h4 class="anchored" data-anchor-id="conda-based-dockerfile"><code>conda</code> based dockerfile</h4>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">FROM</span> condaforge/miniconda3:latest</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">USER</span> root</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> conda create <span class="at">-n</span> test_env python=3.11 <span class="at">-y</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> conda install <span class="at">-n</span> test_env <span class="dt">\</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-tidyverse'</span> <span class="dt">\</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-sessioninfo'</span> <span class="dt">\</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-bedr'</span> <span class="dt">\</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-dbplyr'</span> <span class="dt">\</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-rmariadb'</span> <span class="dt">\</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-seqinr'</span> <span class="dt">\</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-stringr'</span> <span class="dt">\</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-e1071'</span> <span class="dt">\</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-matrixeqtl'</span> <span class="dt">\</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">'ucsc-blat'</span> <span class="dt">\</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-immunedeconv'</span> <span class="dt">\</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">'bioconductor-ensembldb'</span> <span class="dt">\</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">'bioconductor-bsgenome.hsapiens.ncbi.grch38'</span> <span class="dt">\</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">'bioconductor-illuminahumanv4.db'</span> <span class="dt">\</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">'plink'</span> <span class="dt">\</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">'bioconductor-qvalue'</span><span class="dt">\</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-mashr'</span> <span class="dt">\</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">'git'</span><span class="dt">\</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-vcfr'</span> <span class="dt">\</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-ashr'</span> <span class="dt">\</span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-rstatix'</span> <span class="dt">\</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-ggpubr'</span> <span class="dt">\</span></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-glmnet'</span> <span class="dt">\</span></span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-janitor'</span> <span class="dt">\</span></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-reticulate'</span> <span class="dt">\</span></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">-c</span> <span class="st">"bioconda/label/cf201901"</span> <span class="at">-c</span> bioconda <span class="at">-c</span> dnachun <span class="dt">\</span></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">-c</span> anaconda <span class="at">-c</span> conda-forge <span class="at">-y</span> <span class="dt">\</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>    <span class="kw">&amp;&amp;</span> <span class="dt">\</span></span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>    <span class="ex">conda</span> clean <span class="at">--all</span> <span class="at">-f</span> <span class="at">-y</span></span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> echo <span class="st">"source activate test_env"</span> <span class="op">&gt;</span> ~/.bashrc</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a><span class="ex">ENV</span> PATH /opt/conda/envs/test_env/bin:<span class="va">$PATH</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="mamba-based-dockerfile" class="level4">
+<h4 class="anchored" data-anchor-id="mamba-based-dockerfile"><code>mamba</code> based dockerfile</h4>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">FROM</span> condaforge/miniforge3:latest</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">USER</span> root</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> mamba create <span class="at">-n</span> test_env python=3.11 <span class="at">-y</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> mamba install <span class="at">-n</span> test_env <span class="dt">\</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-tidyverse'</span> <span class="dt">\</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-sessioninfo'</span> <span class="dt">\</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-bedr'</span> <span class="dt">\</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-dbplyr'</span> <span class="dt">\</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-rmariadb'</span> <span class="dt">\</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-seqinr'</span> <span class="dt">\</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-stringr'</span> <span class="dt">\</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-e1071'</span> <span class="dt">\</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-matrixeqtl'</span> <span class="dt">\</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">'ucsc-blat'</span> <span class="dt">\</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-immunedeconv'</span> <span class="dt">\</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">'bioconductor-ensembldb'</span> <span class="dt">\</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">'bioconductor-bsgenome.hsapiens.ncbi.grch38'</span> <span class="dt">\</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">'bioconductor-illuminahumanv4.db'</span> <span class="dt">\</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">'plink'</span> <span class="dt">\</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">'bioconductor-qvalue'</span><span class="dt">\</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-mashr'</span> <span class="dt">\</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">'git'</span><span class="dt">\</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-vcfr'</span> <span class="dt">\</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-ashr'</span> <span class="dt">\</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-rstatix'</span> <span class="dt">\</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-ggpubr'</span> <span class="dt">\</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-glmnet'</span> <span class="dt">\</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-janitor'</span> <span class="dt">\</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">'r-reticulate'</span> <span class="dt">\</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">-c</span> <span class="st">"bioconda/label/cf201901"</span> <span class="at">-c</span> bioconda <span class="at">-c</span> dnachun <span class="dt">\</span></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">-c</span> anaconda <span class="at">-c</span> conda-forge <span class="at">-y</span> <span class="dt">\</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    <span class="kw">&amp;&amp;</span> <span class="dt">\</span></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>    <span class="ex">mamba</span> clean <span class="at">--all</span> <span class="at">-f</span> <span class="at">-y</span></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a><span class="ex">RUN</span> echo <span class="st">"source activate test_env"</span> <span class="op">&gt;</span> ~/.bashrc</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a><span class="ex">ENV</span> PATH /opt/conda/envs/test_env/bin:<span class="va">$PATH</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Both <code>dockerfiles</code> are intended to accomplish the same goal. Create a <code>conda</code> env called <code>test_env</code>, install a list of packages in <code>test_env</code>, and then activate the <code>test_env</code>. However, while they accomplish the same goal, the way they both go about it is very different. I’ve told you that the <code>mamba</code> based package installation is superior to using <code>conda</code> since it’s faster, but now let’s look at the output of a <code>docker build</code> command for both of these <code>dockerfiles</code>.</p>
+</section>
+<section id="mamba-based-docker-build-time" class="level4">
+<h4 class="anchored" data-anchor-id="mamba-based-docker-build-time"><code>mamba</code> based docker build time</h4>
+<pre class="lang-shell"><code>[+] Building 1250.0s (8/8) FINISHED
+ =&gt; [internal] load build definition from dockerfile                                                                                                                                                        0.4s
+ =&gt; =&gt; transferring dockerfile: 897B                                                                                                                                                                        0.0s
+ =&gt; [internal] load .dockerignore                                                                                                                                                                           0.3s
+ =&gt; =&gt; transferring context: 2B                                                                                                                                                                             0.0s
+ =&gt; [internal] load metadata for docker.io/condaforge/miniforge3:latest                                                                                                                                     0.0s
+ =&gt; CACHED [1/4] FROM docker.io/condaforge/miniforge3:latest                                                                                                                                                0.0s
+ =&gt; [2/4] RUN mamba create -n test_env python=3.11 -y                                                                                                                                                      71.8s
+ =&gt; [3/4] RUN mamba install -n test_env     'r-tidyverse'     'r-sessioninfo'     'r-bedr'     'r-dbplyr'     'r-rmariadb'     'r-seqinr'     'r-stringr'     'r-e1071'     'r-matrixeqtl'     'ucsc-bl  1122.7s
+ =&gt; [4/4] RUN echo "source activate test_env" &gt; ~/.bashrc                                                                                                                                                   1.5s
+ =&gt; exporting to image                                                                                                                                                                                     53.4s
+ =&gt; =&gt; exporting layers                                                                                                                                                                                    53.3s
+ =&gt; =&gt; writing image sha256:94fbf957162e3735bcba17769deca5a2203f0ec6c7625d8f67254a085ac41531                                                                                                                0.0s
+ =&gt; =&gt; naming to docker.io/library/mamba_test                                                                                                                                                               0.0s</code></pre>
+<p><code>mamba</code> (<code>miniforge3</code>, more specifically) took a total of 1250 seconds to accomplish this. (Approximately 21 minutes.)</p>
+</section>
+<section id="conda-based-build-time" class="level4">
+<h4 class="anchored" data-anchor-id="conda-based-build-time"><code>conda</code> based build time</h4>
+<pre class="lang-shell"><code>[+] Building 4180.1s (9/9) FINISHED
+ =&gt; [internal] load build definition from dockerfile                                                                      0.4s
+ =&gt; =&gt; transferring dockerfile: 875B                                                                                      0.0s
+ =&gt; [internal] load .dockerignore                                                                                         0.3s
+ =&gt; =&gt; transferring context: 2B                                                                                           0.0s
+ =&gt; [internal] load metadata for docker.io/continuumio/miniconda3:latest                                                  0.7s
+ =&gt; [auth] continuumio/miniconda3:pull token for registry-1.docker.io                                                     0.0s
+ =&gt; CACHED [1/4] FROM docker.io/continuumio/miniconda3:latest@sha256:5ee0ed861bce8f67acb0a3e8a416891781db54302d93bf20a3c  0.0s
+ =&gt; [2/4] RUN conda create -n test_env python=3.11 -y                                                                    30.9s
+ =&gt; [3/4] RUN echo "source activate test_env" &gt; ~/.bashrc                                                                 1.4s
+ =&gt; [4/4] RUN conda install     'r-tidyverse'     'r-sessioninfo'     'r-bedr'     'r-dbplyr'     'r-rmariadb'     'r-  4073.2s
+ =&gt; exporting to image                                                                                                   73.4s
+ =&gt; =&gt; exporting layers                                                                                                  73.2s
+ =&gt; =&gt; writing image sha256:30e994e7715109c9860dc45b40e2e57cac194c035a0239ad4b1a8246c59bf8f6                              0.1s
+ =&gt; =&gt; naming to docker.io/library/conda_test                                                                             0.1s</code></pre>
+<p><code>conda</code> (<code>miniconda3</code>, more specifically) took a total of 4180 seconds to accomplish this. (Approximately 70 minutes.)</p>
+<p><code>conda</code> took about 3.3 times the amount of time <code>mamba</code> did to build the same environment!</p>
+<p><code>libsolv</code> makes <code>mamba</code> shine and helps it outperform regular <code>conda</code> for package management.</p>
+<p>This is why I prefer using <code>mamba</code> over <code>conda</code> for environment based package management. Especially when I’m adding stuff and rebuilding containers over and over, this extra saved time makes a big difference when it adds up.</p>
+<p>Try <code>mamba</code> yourself! Remember, if you can use <code>conda</code>, you already know how to use <code>mamba</code>!</p>
+</section>
+</section>
+<section id="references" class="level1">
+<h1>References</h1>
+<ul>
+<li><p><a href="https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html"><code>mamba</code> and <code>micromamba</code> installation documentation</a></p></li>
+<li><p><a href="https://github.com/mamba-org/mamba"><code>mamba</code> Github repo</a></p></li>
+<li><p><a href="https://github.com/conda-forge/miniforge"><code>miniforge</code> Github repo</a></p></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<script src="https://giscus.app/client.js" data-repo="naveenk2022/website-giscus-comments" data-repo-id="R_kgDOKri3cw" data-category="Announcements" data-category-id="DIC_kwDOKri3c84Ca1Xu" data-mapping="pathname" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

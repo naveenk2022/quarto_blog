@@ -1,6 +1,6 @@
 project:
   type: website
-
+  output-dir: docs
 website:
   open-graph: true
   navbar:
@@ -36,4 +36,5 @@ format:
     toc: true
 
 editor: visual
-
+execute:
+  freeze: auto

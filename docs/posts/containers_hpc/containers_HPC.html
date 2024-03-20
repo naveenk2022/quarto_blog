@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.433">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Naveen Kannan">
+<meta name="dcterms.date" content="2023-06-17">
+<meta name="description" content="A brief rundown of Docker and Singularity, and their relevance in HPC environments.">
+
+<title>Docker, Singularity, and HPC.</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+<meta property="og:title" content="Docker, Singularity, and HPC.">
+<meta property="og:description" content="A brief rundown of Docker and Singularity, and their relevance in HPC environments.">
+<meta property="og:image" content="GDEP_DockerModel.jpg">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Naveen Kannan</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html" rel="" target="">
+ <span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../publications.html" rel="" target="">
+ <span class="menu-text">Publications</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../portfolio.html" rel="" target="">
+ <span class="menu-text">Portfolio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../blog_main.html" rel="" target="">
+ <span class="menu-text">Blog Posts</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/naveenk2022" rel="" target=""><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://linkedin.com/in/naveen-kannan-177120118" rel="" target=""><i class="bi bi-linkedin" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/naveenk2022/CV/blob/master/CV.pdf" rel="" target=""><i class="bi bi-file-person" role="img">
+</i> 
+ <span class="menu-text">CV</span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#containers" id="toc-containers" class="nav-link active" data-scroll-target="#containers">Containers</a></li>
+  <li><a href="#container-mounting" id="toc-container-mounting" class="nav-link" data-scroll-target="#container-mounting">Container Mounting</a>
+  <ul class="collapse">
+  <li><a href="#container-lingo" id="toc-container-lingo" class="nav-link" data-scroll-target="#container-lingo">Container Lingo</a></li>
+  </ul></li>
+  <li><a href="#docker-containers" id="toc-docker-containers" class="nav-link" data-scroll-target="#docker-containers">Docker Containers</a></li>
+  <li><a href="#singularity" id="toc-singularity" class="nav-link" data-scroll-target="#singularity">Singularity</a></li>
+  <li><a href="#docker-vs-singularity-in-hpc-clusters" id="toc-docker-vs-singularity-in-hpc-clusters" class="nav-link" data-scroll-target="#docker-vs-singularity-in-hpc-clusters">Docker vs Singularity in HPC clusters</a></li>
+  <li><a href="#further-reading-and-references" id="toc-further-reading-and-references" class="nav-link" data-scroll-target="#further-reading-and-references">Further Reading and References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Docker, Singularity, and HPC.</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">Computing</div>
+    <div class="quarto-category">HPC</div>
+    <div class="quarto-category">Containers</div>
+    <div class="quarto-category">Discussion</div>
+    <div class="quarto-category">Docker</div>
+    <div class="quarto-category">Singularity</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    A brief rundown of Docker and Singularity, and their relevance in HPC environments.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Naveen Kannan </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">June 17, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="GDEP_DockerModel.jpg" class="img-fluid figure-img"></p>
+</figure>
+</div>
+<section id="containers" class="level1">
+<h1>Containers</h1>
+<p>Containers are environments that are intended to be lightweight and standalone software, with isolation from the host machine, which ensures that containers work uniformly across different staging and development instances.</p>
+<p>Containers <em>share</em> the host OS’s kernel and do not require an OS per application, which is a key difference between containers and virtual machines, which otherwise share a lot of similarities.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="docker_architecture.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">A very basic overview of container architecture.</figcaption>
+</figure>
+</div>
+<p>Containers can be built using specifications (most commonly, a <strong>dockerfile</strong> for Docker containers, and a <strong>definition(def)</strong> file for Singularity.)</p>
+<p>These specification files are simple text files that are merely an aggregation of instructions to the container client to set up the container image.</p>
+<p>The packages installed according to the specifications could be wildly different from the host OS packages and software, and this won’t result in any conflicts between the container and the host system since they are isolated from each other, merely sharing the host OS kernel.</p>
+<p><em>Containers are not interchangeable with images!</em></p>
+<p>Images and containers are two different entities. Containers are instances of images, and depending on the container client used, they may or may not be immutable.</p>
+<p>When a container is removed, any changes to its state that are not stored in persistent storage disappear.</p>
+<p>In this post, I will be going over two common platforms that can be used to run containers, and this will be purely in the context of use in HPC environments. These are <strong>Docker</strong> and <strong>Singularity</strong>.</p>
+</section>
+<section id="container-mounting" class="level1">
+<h1>Container Mounting</h1>
+<p>Containers and the changes made to the container do not persist after the container instance is killed.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="cat_bubble.jpg" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Think of containers as a bubble. Once they pop, its like they were never there at all!</figcaption>
+</figure>
+</div>
+<p>It is possible to “mount” data directories on the host machine into the container instance, allowing for the changes made to the host system directory to persist after the container instance is killed.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="container_mounting.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Mounting a directory allows for the changes made by the container within the directory to persist after the container is killed.</figcaption>
+</figure>
+</div>
+<section id="container-lingo" class="level2">
+<h2 class="anchored" data-anchor-id="container-lingo">Container Lingo</h2>
+<p>Containers are built from <strong>images</strong>.</p>
+<p>Images are built from a series of read-only “layers”, and each one of these layers are instructions from the specification file(most commonly, a <strong>dockerfile</strong> for Docker containers, and a <strong>definition(def)</strong> file for Singularity.) that was used to build an image.</p>
+<p>Think of images as the template from which containers are run.</p>
+<p>A container is a running instance of an image, and they are isolated from the host system.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="container_lingo.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</section>
+</section>
+<section id="docker-containers" class="level1">
+<h1>Docker Containers</h1>
+<p>Docker is an open platform that allows for separation of development tools and processes from your native infrastructure. It provides the ability to run processes in an semi-isolated environment called a <strong>container</strong>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Docker_Logo.jpg" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">The Docker logo.</figcaption>
+</figure>
+</div>
+<p>Generally speaking, containers are isolated from the host machine, and depending on the commands used, the changes made within the container will not persist on the host machine. This ensures that containers work uniformly across different staging and development instances. Docker (unless specifically instructed to do otherwise) is isolated from the host system’s directories.</p>
+<p>Docker is specifically intended for:</p>
+<ul>
+<li>Application Development.</li>
+<li>Distributing and testing of an application.</li>
+<li>Deploying applications in a production environment for further testing.</li>
+<li>Sharing builds across teams and collaborators.</li>
+</ul>
+<p>An important feature to note about Docker is that it runs the container with <strong>root privileges</strong>. Allowing a user to use Docker is basically allowing them to have full root access. This is by design; running containers (and applications) with Docker implies running the Docker daemon, and the Docker daemon requires root privileges.</p>
+<p>This, in conjunction with the ability to mount folders and files from the host system allows any user who is allowed to run Docker containers and commands to basically have root access!</p>
+<p>Docker Containers are built from Docker images, which are compiled from dockerfiles.</p>
+</section>
+<section id="singularity" class="level1">
+<h1>Singularity</h1>
+<p>Singularity is an open source tool that was created to run complex applications specifically on HPC clusters.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="singularity logo.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">The Singularity logo.</figcaption>
+</figure>
+</div>
+<p>Singularity is focused on integration over isolation, and the SIF container format is lightweight and easy to transport and share.</p>
+<p>Singularity containers retain the permissions of the user launching the container instance, ensuring that users are not given permissions that they did not have in the host system.</p>
+<p>Singularity supports integration with Batch Scheduling and Resource Managers commonly used in HPC environments, like SLURM and PBS, and the synergy of the lightweight nature of containers with the resource efficient batch submission capabilities of SLURM provide a fantastic working relationship in the context of HPC clusters.</p>
+<p>Furthermore, Singularity containers can be built to be immutable (production build). This means that the Singularity image file is <em>read-only</em>. For example, if you were to create a container that has data and performs an analysis on that data, and you wanted to share the container and the data without allowing for it to be edited in any manner, production build Singularity containers would be perfectly suited for that.</p>
+<p>Although, if you did want a Singularity image to be writable, or to have a writable folder, there are options for that!</p>
+<ul>
+<li>The <code>--sandbox</code> option allows for building the image into a writable directory.</li>
+<li>The <code>--writable</code> option allows for building into an ext3 image file, that has writable permissions. (Note that the production build Singularity containers are in the read-only squashfs format.)</li>
+</ul>
+<p>Note that usage of these two options will require <strong>sudo privileges</strong>, futher making it well suited for use in a HPC cluster.</p>
+<p>The Singularity flow consists of two environments.</p>
+<ul>
+<li>A <strong>build</strong> environment (user needs to have sudo privileges) for testing purposes, allowing for the image or a directory within the image to be writable, using the above options.</li>
+<li>A <strong>production</strong> environment, where the image is in the immutable, read-only squashfs format.</li>
+</ul>
+<p>The combination of the above factors means that Singularity is particularly well suited for use in HPC environments, allowing for:</p>
+<ul>
+<li><strong>Content integrity</strong>(if using the immutable squashfs format)</li>
+<li><strong>Reproducible environments</strong>, which facilitate simplicity in sharing scientific workflows</li>
+<li><strong>Highly portable Image formats</strong>( The SIF file format is lightweight and super easy to share across networks.)</li>
+<li><strong>Ensuring preservation of user permissions within the container</strong></li>
+<li><strong>Integration of the host system with the container file system</strong>, allowing for host documents to be integrated with the containers applications (depending on the permissions of the user.) While Singularity also allows for binding of host directories to the container directories (like Docker!), in addition to allowing for binding directories, by default, Singularity has static system-defined bind points, which are <code>$HOME</code>, <code>/tmp</code>, <code>/proc</code>, <code>/sys</code> and <code>/dev</code>. The permissions of the user in the container are the same as the permissions of the user in the host system, ensuring that the containers are not given unnecessary permissions and access to files they shouldn’t have.</li>
+</ul>
+</section>
+<section id="docker-vs-singularity-in-hpc-clusters" class="level1">
+<h1>Docker vs Singularity in HPC clusters</h1>
+<p>Singularity is much better suited for use in HPC clusters compared to Docker containers.</p>
+<table class="table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 38%">
+<col style="width: 36%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Feature</th>
+<th>Docker</th>
+<th>Singularity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Integration with batch submission and resource arbitration tools like SLURM and PBS</td>
+<td>Requires custom scripting and configuration. SLURM container implementation requires that containers must run in unprivileged (rootless) invocation, and the oci.conf file on each node must be configured to allow Docker to run in rootless mode.</td>
+<td>Specifically designed for integration with HPC clusters and use alongside SLURM. Pretty easy to integrate them.</td>
+</tr>
+<tr class="even">
+<td>Permissions and security</td>
+<td>Docker provides the user in the container with root access, which is a big issue in HPC cluster usage.</td>
+<td>Singularity preserves permissions across the host and container, and depending on the image format, the image can be immutable as well (read-only).</td>
+</tr>
+<tr class="odd">
+<td>Isolation from host system</td>
+<td>Docker favors isolation over integration, only allowing for directories from the host system to be accessed if mounted, with complete isolation from the host system otherwise.</td>
+<td>Singularity favors integration over isolation. While directory mounting is allowed, by default, Singularity has system-defined bind paths that allow for the integration of the host directories with the container, and the preservation of permission ensures the container user cannot perform actions on these files that they cannot do in the host system.</td>
+</tr>
+<tr class="even">
+<td>Portability</td>
+<td>Local transport of Docker images involves either the creation of cumbersome .tar files, or the uploading of the image to a registry.</td>
+<td>Images are in a lightweight, easy to transport SIF format, which greatly enhances reproducibility of scientific environments, especially when using production builds.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="further-reading-and-references" class="level1">
+<h1>Further Reading and References</h1>
+<p>This post is only meant to cover the bare necessities of Docker containers and Singularity containers in the context of HPC computation. While I’ve done my best to be as descriptive as possible, it is always a good idea to peruse official documentation for your own enlightenment!</p>
+<p>A lot of the information here comes from these links:</p>
+<p><a href="https://docs.docker.com/">Docker Documentation</a></p>
+<p><a href="https://singularity-userdoc.readthedocs.io/en/latest/index.html">Singularity documentation</a></p>
+<p><a href="https://slurm.schedmd.com/containers.html">SLURM documentation regarding container integration</a></p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<script src="https://giscus.app/client.js" data-repo="naveenk2022/website-giscus-comments" data-repo-id="R_kgDOKri3cw" data-category="Announcements" data-category-id="DIC_kwDOKri3c84Ca1Xu" data-mapping="pathname" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

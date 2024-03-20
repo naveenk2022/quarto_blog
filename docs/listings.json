@@ -1,0 +1,17 @@
+[
+  {
+    "listing": "/blog_main.html",
+    "items": [
+      "/posts/spark_postgres/spark_postgres.html",
+      "/posts/mamba_pipeline/mamba_pipeline.html",
+      "/posts/docker_root/docker_root.html",
+      "/posts/hive_sql/hive_sql.html",
+      "/posts/ansible_playbooks/ansible_playbooks.html",
+      "/posts/hadoop_spark/hadoop_spark.html",
+      "/posts/ansible_cluster/ansible_cluster_config.html",
+      "/posts/containers_hpc/containers_HPC.html",
+      "/posts/2023-06-14/slurm_blog.html",
+      "/posts/2023-03-22/01_blog.html"
+    ]
+  }
+]

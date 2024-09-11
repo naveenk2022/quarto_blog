@@ -2,6 +2,7 @@
   {
     "listing": "/blog_main.html",
     "items": [
+      "/posts/dnsmsq_pxe/dnsmasq_pxe.html",
       "/posts/spark_postgres/spark_postgres.html",
       "/posts/mamba_pipeline/mamba_pipeline.html",
       "/posts/docker_root/docker_root.html",

@@ -17,11 +17,10 @@ about:
 
 Hey! Welcome to my website.
 
-I'm a Research Associate in the Department of Population and Quantitative Health Sciences at Case Western Reserve University. My research interests include Deep Learning, Bioinformatics, Biostatistics and Geospatial Analytics. In my spare time I enjoy art, swimming, hiking and cooking.
+I'm a Database Engineer at [Trailhead Biosystems, Cleveland](https://www.trailbio.com). My research interests include Deep Learning, Bioinformatics, Biostatistics and Geospatial Analytics. In my spare time I enjoy art, swimming, hiking and cooking.
 
 This is my personal little nerd cave. I like to share the work I do on my blog. I hope you find something useful here!
 
-------------------------------------------------------------------------
 
 ## Education
 
@@ -37,17 +36,25 @@ Madras Medical College \| Chennai, India
 
 September 2016 - March 2020
 
-------------------------------------------------------------------------
+----
 
 ## Experience
+
+<span style="color: #3182bd;">**Database Engineer**</span>
+
+Trailhead Biosystems, Cleveland, Ohio
+
+July 2024 - Present
+
+---
 
 **Research Associate**
 
 Department of Population and Quantitative Health Sciences, Case Western Reserve University
 
-May 2023 - Present
+May 2023 - July 2024
 
-------------------------------------------------------------------------
+----
 
 **Graduate Research Assistant**
 
@@ -55,7 +62,7 @@ Department of Population and Quantitative Health Sciences, Case Western Reserve 
 
 January 2023 - May 2023
 
-------------------------------------------------------------------------
+----
 
 **Graduate Research Assistant**
 
@@ -63,7 +70,7 @@ GIS Health and Hazards Lab, Department of Population and Quantitative Health Sci
 
 May 2022 - December 2022
 
-------------------------------------------------------------------------
+----
 
 **Medical Observer**
 
@@ -71,7 +78,7 @@ Kauvery Hospitals, Chennai, India
 
 October 2020 - March 2021
 
-------------------------------------------------------------------------
+----
 
 **Junior Resident Doctor**
 
@@ -79,7 +86,7 @@ Department of Psychiatry, Saveetha Medical College, India
 
 July 2020 - September 2020
 
-------------------------------------------------------------------------
+----
 
 **Intern Doctor**
 

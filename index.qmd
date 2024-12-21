@@ -15,9 +15,8 @@ about:
       href: https://github.com/naveenk2022
 ---
 
-Hey! Welcome to my website.
-
-I'm a Database Engineer at [Trailhead Biosystems, Cleveland](https://www.trailbio.com). My research interests include Deep Learning, Bioinformatics, Biostatistics and Geospatial Analytics. In my spare time I enjoy art, swimming, hiking and cooking.
+I'm a Database Engineer at [Trailhead Biosystems, Cleveland](https://www.trailbio.com). 
+My research interests include Deep Learning, Bioinformatics, Biostatistics and Geospatial Analytics. In my spare time I enjoy art, swimming, hiking and cooking.
 
 This is my personal little nerd cave. I like to share the work I do on my blog. I hope you find something useful here!
 
@@ -36,7 +35,7 @@ Madras Medical College \| Chennai, India
 
 September 2016 - March 2020
 
-----
+------------------------------------------------------------------------
 
 ## Experience
 
@@ -46,7 +45,7 @@ Trailhead Biosystems, Cleveland, Ohio
 
 July 2024 - Present
 
----
+------------------------------------------------------------------------
 
 **Research Associate**
 
@@ -54,7 +53,7 @@ Department of Population and Quantitative Health Sciences, Case Western Reserve 
 
 May 2023 - July 2024
 
-----
+------------------------------------------------------------------------
 
 **Graduate Research Assistant**
 

@@ -5,21 +5,11 @@ subtitle: "In Chronological Order"
 
 ------------------------------------------------------------------------
 
-Using Spatial Video and Deep Learning for Automated Mapping of Relief Camps
+Ajayakumar, J., Curtis, A. J., Maisha, F. M., Bempah, S., Ali, A., **Kannan, N.**, Armstrong, G., & Morris, J. G. (2024). [Using spatial video and deep learning for automated mapping of ground-level context in relief camps. International Journal of Health Geographics, 23(1), 23.]( https://doi.org/10.1186/s12942-024-00382-7)
 
-Jayakrishnan Ajayakumar ^a^, Andrew J. Curtis ^a^ , Felicien Maisha ^b^ , Sandra Bempah ^c^ , Afsar Ali ^b,d^ , J. Glenn Morris Jr. ^b,e^ , **Naveen Kannan** ^a^ , and Grace Armstrong ^a^
+------------------------------------------------------------------------
 
-a)  Department of Population and Quantitative Health Sciences, School of Medicine, Case Western Reserve University, Cleveland, Ohio, USA;
-
-b)  Emerging Pathogens Institute, University of Florida, Gainesville, Florida, USA;
-
-c)  Department of Geography, Kent State University, Kent, Ohio, USA;
-
-d)  Department of Environmental & Global Health, College of Public Health and Health Professions, University of Florida, Gainesville, Florida, USA;
-
-e)  College of Medicine, University of Florida, Gainesville, Florida, USA
-
-**\[Manuscript under review\]**
+Ruksakulpiwat, S., Thongking, W., **Kannan, N.**, Wright, E., Niyomyart, A., Benjasirisan, C., Chiaranai, C., Smothers, C., Aldossary, H. M., & Still, C. H. (9900). [Understanding the Relationship Between Comorbidities, Medication Nonadherence, Activities of Daily Living, and Heart Condition Status Among Older Adults in the United States: A Regression Analysis and Machine Learning Approach. Journal of Cardiovascular Nursing.](https://journals.lww.com/jcnjournal/fulltext/9900/understanding_the_relationship_between.224.aspx)
 
 ------------------------------------------------------------------------
 
@@ -31,12 +21,6 @@ Annotation and scoring of the deleteriousness of individual genetic variants in 
 2)  Department of Pathology and Laboratory Medicine, Penn Neurodegeneration Genomics Center, Perelman School of Medicine, University of Pennsylvania, Philadelphia, Pennsylvania 19104, USA.
 
 Presented at the Annual Meeting of The American Society of Human Genetics, November 3, 2023 in Washington DC.
-
-![With my amazing professor, Dr William S Bush!](images/IMG_20231103_104133_01.jpg){fig-align="center"}
-
-------------------------------------------------------------------------
-
-Suebsarn R., W. T., **Naveen K**., Ellis W., Atsadaporn N., Chitchanok B., Chantira C., Christine S., Heba A. Using regression analysis and machine learning approach to understand the association between comorbidities, medication nonadherence, activity of daily living, and heart condition status among older adults in the United States. **\[Manuscript under review\]**
 
 ------------------------------------------------------------------------
 
@@ -54,4 +38,4 @@ Ramasamy, V., Vellaisamy, R., **Kannan, N**., & Gounder, K. D. (2016). [Refined 
 
 **Kannan, N**., Vellaisamy, R., Govindarajan, M., & Gounder, K. D. (2016). [Pellagra following pancreaticoduodenectomy for malignant pancreatic carcinoid with pluripotent hormonal potential](https://www.hpbonline.org/article/S1365-182X(16)31013-9/fulltext). *HPB*, *18*, e381-e382.
 
-------------------------------------------------------------------------
+

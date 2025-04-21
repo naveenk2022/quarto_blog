@@ -6,7 +6,7 @@ about:
   links:
     - icon: linkedin
       text: Linkedin
-      href: https://linkedin.com/in/naveen-kannan-177120118
+      href: https://www.linkedin.com/in/naveenkannan1/
     - icon: mortarboard-fill
       text: Google Scholar 
       href: https://scholar.google.com/citations?hl=en&user=RoRCNVIAAAAJ

@@ -22,7 +22,7 @@ Furthermore, it allows mirroring of backups to cloud-compatible object stores, i
 
 ![pgBackRest helps make taking database backups pretty straightforward.](pgbackrest_logo.png){fig-align="center"}
 
-nsecurely configured SFTP backups can expose critical database content to unauthorized access, yet many organizations rely on them for off-site storage. This guide addresses the security gap and will explain the process of setting up remote SFTP repositories in a secure manner. We will create a system user on the SFTP repository and limit their permissions, and perform scheduled backups exclusively via the limited user account.
+Insecurely configured SFTP backups can expose critical database content to unauthorized access, yet many organizations rely on them for off-site storage. This guide addresses the security gap and will explain the process of setting up remote SFTP repositories in a secure manner. We will create a system user on the SFTP repository and limit their permissions, and perform scheduled backups exclusively via the limited user account.
 
 A good database backup strategy uses multiple repositories of different types, alongside both physical and logical backups. Do not limit yourself to merely SFTP repositories. Remember, with database backups, redundancy is good. This tutorial is simply to explain how to *securely* configure SFTP backups.
 
@@ -369,4 +369,4 @@ This confirms that pgBackRest is using the manually installed libssh2 from `/usr
 
 -   [libssh2](https://libssh2.org/)
 
--   [PostgreSQL backup documentation] (https://www.postgresql.org/docs/current/backup.html)
+-   [PostgreSQL backup documentation](https://www.postgresql.org/docs/current/backup.html)
